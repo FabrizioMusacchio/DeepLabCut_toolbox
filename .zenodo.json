@@ -1,0 +1,32 @@
+{
+  "title": "DeepLabCut Analysis Toolbox",
+  "version": "1.0.0",
+  "creators": [
+    {
+      "name": "Musacchio, Fabrizio",
+      "orcid": "0000-0002-9043-3349",
+      "affiliation": "German Center for Neurodegenerative Diseases (DZNE)",
+      "type": "ProjectLeader"
+    }
+  ],
+  "access_right": "open",
+  "license": "GPL-3.0",
+  "upload_type": "software",
+  "publication_date": "2025-04-19",
+  "language": "eng",
+  "repository": "https://github.com/FabrizioMusacchio/MotilA",
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/FabrizioMusacchio/MotilA/tree/main",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    }
+  ],
+  "keywords": [
+    "DeepLabCut",
+    "Neuroscience",
+    "Behavioral Analysis",
+    "Python"
+  ],
+  "description": "The DeepLabCut Analysis Toolbox provides scripts to process and analyze behavioral tracking data output from DeepLabCut (DLC). It includes functionalities for computing velocity, detecting movement above threshold, grouping body parts, analyzing time intervals, and visualizing the results. Designed for research in neuroscience and behavioral science, the toolbox supports transparent and reproducible movement analysis workflows."
+}
