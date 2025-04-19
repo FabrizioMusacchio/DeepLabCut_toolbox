@@ -83,5 +83,12 @@ When using out toolbox, you can cite it using the following BibTeX entry:
   publisher = {GitHub},
   journal = {GitHub repository},
   howpublished = {\url{https://github.com/FabrizioMusacchio/DeepLabCut_toolbox}},
+  doi = {10.5281/zenodo.15245611},
 }
 ```
+
+
+The toolbox is archived on Zenodo, making it citable and persistent. You can always access the latest version via the concept DOI: [10.5281/zenodo.15245611](https://doi.org/10.5281/zenodo.15245611).
+
+Zenodo also provides version-specific DOIs, allowing you to cite the exact release you used. Simply visit the [Zenodo record](https://doi.org/10.5281/zenodo.15245611) to find the DOI associated with the version of the toolbox corresponding to your project.
+

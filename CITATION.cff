@@ -9,6 +9,7 @@ authors:
     orcid: https://orcid.org/0000-0002-9043-3349
 repository-code: https://github.com/FabrizioMusacchio/MotilA/tree/main
 license: GPL-3.0
+doi: https://doi.org/10.5281/zenodo.15245611
 keywords:
   - DeepLabCut
   - Neuroscience
