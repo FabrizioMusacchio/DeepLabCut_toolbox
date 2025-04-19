@@ -6,7 +6,7 @@ The scripts are designed to be modular and can be easily adapted to suit your sp
 
 New scripts will be added from time to time, and the repository will be updated with new features and improvements.
 
-## Installation
+## ⬇️ Installation
 
 ```bash
 conda create -n dlc_analysis -y python=3.11 mamba
@@ -23,7 +23,7 @@ The script `velocity_calculation.py` is designed to analyze the velocity of trac
 The script also generates a plot of the velocity over time, which can be useful for visualizing the movement patterns of the tracked points.
 
 
-## How to cite
+## ✍ How to cite
 When using out toolbox, you can cite it using the following BibTeX entry:
 
 ```bibtex
