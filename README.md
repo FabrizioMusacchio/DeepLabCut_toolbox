@@ -9,7 +9,7 @@ New scripts will be added from time to time, and the repository will be updated 
 ## ⬇️ Installation
 
 ```bash
-conda create -n dlc_analysis -y python=3.11 mamba
+conda create -n dlc_analysis -y python=3.12 mamba
 conda activate dlc_analysis
 mamba install -y ipykernel ipython numpy matplotlib pandas
 ```
