@@ -14,7 +14,7 @@ conda activate dlc_analysis
 mamba install -y ipykernel ipython numpy matplotlib pandas
 ```
 
-## Velocity Analysis
+## 🚀 Velocity Analysis
 The script `velocity_calculation.py` is designed to analyze the velocity of tracked points in a DLC output table. It calculates 
 
 * the velocity of each point and 
@@ -22,3 +22,17 @@ The script `velocity_calculation.py` is designed to analyze the velocity of trac
 
 The script also generates a plot of the velocity over time, which can be useful for visualizing the movement patterns of the tracked points.
 
+
+## How to cite
+When using out toolbox, you can cite it using the following BibTeX entry:
+
+```bibtex
+@misc{dlc_analysis_toolbox,
+  author = {Musacchio, Fabrizio},
+  title = {DeepLabCut Analysis Toolbox},
+  year = {2025},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/FabrizioMusacchio/DeepLabCut_toolbox}},
+}
+```
