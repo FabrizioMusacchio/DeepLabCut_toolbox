@@ -1,3 +1,5 @@
+![GitHub Release](https://img.shields.io/github/v/release/FabrizioMusacchio/DeepLabCut_toolbox) [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
+
 # DeepLabCut Analysis Toolbox
 
 This repository contains a collection of scripts designed to facilitate the analysis of DeepLabCut (DLC) results data. The primary focus is analyzing the DLC output tables, that contain the x and y coordinates of the tracked points, and analyzing them within the paradigm of their underlying behavioral task. 
