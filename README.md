@@ -38,9 +38,12 @@ Before running `velocity_calculation.py`, define the following parameters at the
 | `pixel_size`          | `float`   | Physical size of one pixel, in mm. Use `1` if physical calibration is not required. <br> *Example:* `0.05` for 50 µm/pixel |
 | `spatial_unit`        | `str`     | Unit for the spatial scale of velocity. Only used for labeling plots. <br> *Example:* `"mm"` |
 | `likelihood_threshold`| `float`   | Minimum DeepLabCut likelihood score to consider a detection as valid. Values range from `0` to `1`. <br> *Example:* `0.9`                        |
-| `movement_threshold`  | `float`   | Velocity threshold (in px/s or mm/s) to classify a body part as moving. <br> *Example:* `50`                                                    |
+| `movement_threshold`  | `float`   | Velocity threshold (in px/s or mm/s) to classify a body part as moving. <br> *Example:* `50` |
+| `ylim`                  | `float` or `None`  | Sets the y-axis limit of the velocity plot. <br>`None` for automatic scaling; numeric (e.g., `1000`) for fixed scaling. |
+| `bodypart_not_to_plot`  | `list[str]` or `None` | List of body parts to exclude from velocity plots. Set to `None` to include all. <br>Example: `['center', 'tail']` |
 | `bodypart_groups`      | `dict` or `None` | Optional dictionary grouping body parts into named groups for group-wise velocity and movement analysis. <br> *Example:* `{'head': ['nose', 'neck'], 'rear': ['tail_base']}` |
 | `time_intervals`       | `dict` or `None` | Optional dictionary defining named time intervals (in frames) for separate analysis over subsegments. <br> *Example:* `{'baseline': [0, 2499], 'stimulus': [2500, 4999]}` |
+
 
 **Notes**:  
 * Leave `bodypart_groups` and `time_intervals` as `None` if you do not want to use grouping or interval-based analysis.  When enabled, the script will compute separate statistics per group and/or per interval and save them in distinct output files.

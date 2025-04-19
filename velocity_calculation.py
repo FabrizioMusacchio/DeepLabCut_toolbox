@@ -23,8 +23,8 @@ plt.rcParams["axes.spines.right"]  = False
 # %% DEFINE PATH AND PARAMETERS (ADJUST HERE)
 
 # set your data and results paths here:
-DATA_PATH = "./input_data/"
-RESULTS_PATH = "./results/"
+DATA_PATH = "/Users/husker/Workspace/Emine/DLC cFC/Data Test/"
+RESULTS_PATH = "/Users/husker/Workspace/Emine/DLC cFC/results/"
 
 # define frame rate and time step:
 frame_rate = 30  # fps
@@ -42,21 +42,40 @@ likelihood_threshold = 0.9 # this likelihood refers to the DLC assigned likeliho
                            # threshold, you can filter out low-confidence points.
 
 # define a threshold for movement detection:
-movement_threshold = 100  # px/frame; note, if you set pixel_size to 1, this is in px/s;
+movement_threshold = 500  # px/frame; note, if you set pixel_size to 1, this is in px/s;
                          # if you set pixel_size to a value other than 1, this is in spatial_unit/s;
                          # this threshold is used to determine whether a body part is moving or not;
                          # if the velocity is above this threshold, the body part is considered to be moving;
                          # if the velocity is below this threshold, the body part is considered to be not moving;
 
+# set (optional!) y-axis limit for velocity plot:
+ylim = None # DON'T CHANGE THIS LINE
+#
+# uncomment if you want to set a fixed y-axis limit for the velocity plot:
+#
+# ylim = 1000 # set to a value, e.g., 1000, for fixed scaling;
+#
+# note: this is useful if you want to compare the velocity plots of different files;
+# if you set ylim to None, the y-axis limit will be automatically scaled to the data;
+
+            
+# define bodyparts to be excluded from the velocity plot:
+bodypart_not_to_plot = None  # DO NOT CHANGE THIS LINE
+#
+# uncomment if you want to exclude some body parts from the velocity plot:
+#
+# bodypart_not_to_plot = ['ear_L', 'ear_R'] # set to a list of body parts to be excluded from the velocity plot;
+
+
 # define bodypart-groups:
 # initialize bodypart_groups as None if not defined:
 bodypart_groups = None # DON'T CHANGE THIS LINE
 # 
-# uncomment the following if you want to group body parts together:
+# uncomment if you want to group body parts together:
 #
 # bodypart_groups = {
-#     'group1': ['bodypart1', 'bodypart2'],
-#     'group2': ['bodypart3']}
+#     'head': ['nose', 'ear_L', 'ear_R', 'neck'],
+#     'body': ['center']}
 #
 # grouping body parts together can be useful if you want to assess 
 # moving/non moving only for a subset of body parts, e.g., for all 
@@ -68,10 +87,11 @@ time_intervals = None # DON'T CHANGE THIS LINE
 # 
 # uncomment if you want to separate the analysis into time intervals:
 #
-# time_intervals = {
-#     'interval1': [0, 2499],  # in frames
-#     'interval2': [2500, 12499], # in frames
-#     'interval3': [12500, 17000]} # in frames
+time_intervals = {
+    'pre-shock': [0, 7200],  # in frames
+    'after_shock1': [7200, 11050], # in frames
+    'after_shock2': [11051, 14700],
+    'after_shock3': [14701, 17500]} # in frames
 #
 # note: if you define time intervals, the analysis will be additionally performed for each 
 # interval separately; the results will be saved in separate CSV files for each interval;
@@ -177,7 +197,10 @@ for curr_filename in csv_files:
         #fig, ax = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
         ax[0].plot(frames_array,x, label=body_part+' x', c=colors[body_part_i])
         ax[0].plot(frames_array,y, label=body_part+' y', c=colors[body_part_i], alpha=0.5)
-        ax[1].plot(velocity, label=body_part, c=colors[body_part_i])
+        if bodypart_not_to_plot is not None:
+            if body_part not in bodypart_not_to_plot:
+                ax[1].plot(velocity, label=body_part, c=colors[body_part_i])
+        
         # indicate with a shaded area the frames where the body part is moving; to do so, filter for consecutive True values:
         moving_frames = velocity_df[body_part + '_moving']
         moving_frames_diff = np.diff(moving_frames.astype(int))
@@ -224,6 +247,8 @@ for curr_filename in csv_files:
     ax[1].axhline(movement_threshold, color='r', linestyle='--', label=f'movement threshold\n({movement_threshold} {unit_snippet}/s)')
     ax[1].legend(loc='upper right')
     ax[1].set_xlim(0, len(velocity_df))
+    if ylim is not None:
+        ax[1].set_ylim(0, ylim)
     # change y-axis to log scale:
     #ax[1].set_yscale('log')
     ax[1].set_title(f"body parts movement velocity $v=\\sqrt{{v_x^2 + v_y^2}}$, with $v_{{x/y}}=\\frac{{\\Delta x/y}}{{\\Delta t}}$")
