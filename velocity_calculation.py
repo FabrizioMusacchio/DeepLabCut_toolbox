@@ -54,9 +54,9 @@ bodypart_groups = None # DON'T CHANGE THIS LINE
 # 
 # uncomment the following if you want to group body parts together:
 #
-bodypart_groups = {
-    'group1': ['bodypart1', 'bodypart2'],
-    'group2': ['bodypart3']}
+# bodypart_groups = {
+#     'group1': ['bodypart1', 'bodypart2'],
+#     'group2': ['bodypart3']}
 #
 # grouping body parts together can be useful if you want to assess 
 # moving/non moving only for a subset of body parts, e.g., for all 
@@ -68,10 +68,10 @@ time_intervals = None # DON'T CHANGE THIS LINE
 # 
 # uncomment if you want to separate the analysis into time intervals:
 #
-time_intervals = {
-    'interval1': [0, 2499],  # in frames
-    'interval2': [2500, 12499], # in frames
-    'interval3': [12500, 17000]} # in frames
+# time_intervals = {
+#     'interval1': [0, 2499],  # in frames
+#     'interval2': [2500, 12499], # in frames
+#     'interval3': [12500, 17000]} # in frames
 #
 # note: if you define time intervals, the analysis will be additionally performed for each 
 # interval separately; the results will be saved in separate CSV files for each interval;
