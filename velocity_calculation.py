@@ -12,6 +12,7 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FixedLocator
 
 # set global properties for all plots:
 plt.rcParams.update({'font.size': 14})
@@ -40,7 +41,12 @@ likelihood_threshold = 0.9
 movement_threshold = 50  # px/frame
 # %% FUNCTIONS
 
-# %% MAIN
+# %% MAIN (LEAVE AS IT IS)
+""" 
+HERE, YOU DON'T NEED TO CHANGE ANYTHING – EXCEPT YOU WANT
+TO CUSTOMIZE THE ANALYSIS ACCORDING TO YOUR NEEDS.
+"""
+
 
 # scan for all csv files in the data folder that do not start with a dot:
 csv_files = [f for f in os.listdir(DATA_PATH) if f.endswith('.csv') and not f.startswith('.')]
@@ -53,6 +59,8 @@ for curr_filename in csv_files:
     # load the DeepLabCut output CSV file:
     curr_file = DATA_PATH + curr_filename
     df = pd.read_csv(curr_file, header=[1, 2])
+    
+    print(f"Processing {curr_filename}...")
 
     # clean the filename:
     curr_filename_clean = curr_filename.replace('.csv', '').replace(' ', '_')
@@ -76,11 +84,14 @@ for curr_filename in csv_files:
 
     # prepare a DataFrame for velocity results:
     velocity_df = pd.DataFrame()
+    # add first columns with frame numbers and time corrspondence:
+    velocity_df['frame'] = df_cleaned.index.values
+    velocity_df['time'] = df_cleaned.index.values * time_step
 
     # initialize a plot with two subplots to plot the x-y coordinates of the body parts and the velocity:
     fig, ax = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
-
-    # Compute velocity for each body part
+    
+    # compute velocity for each body part:
     for body_part_i, body_part in enumerate(body_parts):
         # body_part = body_parts[1]
         curr_sub_df = df_cleaned.loc[:, (df_cleaned.columns.get_level_values(0) == body_part)].copy()
@@ -146,7 +157,7 @@ for curr_filename in csv_files:
     for body_part in body_parts:
         moving_frames = velocity_df[body_part + '_moving'].sum()
         valid_frames = velocity_df[body_part + '_valid'].sum()
-        print(f"{body_part}: {moving_frames} moving frames ({100 * moving_frames / valid_frames:.2f}%)")
+        print(f"   {body_part}: {moving_frames} moving frames ({100 * moving_frames / valid_frames:.2f}%)")
         
 
     # finalize plot:
@@ -163,8 +174,13 @@ for curr_filename in csv_files:
     ax[2].set_yticks(np.arange(0, 2 * len(body_parts)+1, 2) + 1)
     ax[2].set_yticklabels(body_parts.append(pd.Index(['any'])))
     ax[2].set_title("body parts in motion")
-    ax[2].set_xlabel(f"frame ($\\Delta$t = {time_step:.3f} s)")
-    
+    ax[2].set_xlabel(f"frame (top) / time (bottom, [s]) ($\\Delta$t = {time_step:.3f} s)")
+    # customize x-tick labels to show "frame/time" format:
+    xticks = ax[2].get_xticks()
+    ax[2].xaxis.set_major_locator(FixedLocator(xticks))
+    xticklabels = [f"{int(tick)}\n{tick * time_step:.1f}" for tick in xticks]
+    ax[2].set_xticklabels(xticklabels)
+        
     # annotate in ax[2] the calculated number of frames with movement for each body part:
     for body_part_i, body_part in enumerate(body_parts):
         moving_frames = velocity_df[body_part + '_moving'].sum()
@@ -183,12 +199,14 @@ for curr_filename in csv_files:
     fig.suptitle(curr_filename_clean)
     plt.tight_layout()
     plt.savefig(os.path.join(RESULTS_PATH, curr_filename+" velocity_plot.pdf"), dpi=300, transparent=True)
-    #plt.show()
     plt.close(fig)
 
+    # add a column containing "any body part moving" to the velocity_df:
+    velocity_df['any_bodypart_moving'] = velocity_df.iloc[:, 2::4].sum(axis=1) > 0
 
     # save or display the results:
     velocity_df.to_csv(RESULTS_EXCEL_PATH + curr_filename_clean + ' velocity_results.csv', index=False)
+    print(f"   Saved results to {RESULTS_EXCEL_PATH + curr_filename_clean + ' velocity_results.csv'}")
 
     
 # %% END
