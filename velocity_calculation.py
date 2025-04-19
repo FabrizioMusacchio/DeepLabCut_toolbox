@@ -42,7 +42,7 @@ likelihood_threshold = 0.9 # this likelihood refers to the DLC assigned likeliho
                            # threshold, you can filter out low-confidence points.
 
 # define a threshold for movement detection:
-movement_threshold = 500  # px/frame; note, if you set pixel_size to 1, this is in px/s;
+movement_threshold = 200  # px/frame; note, if you set pixel_size to 1, this is in px/s;
                          # if you set pixel_size to a value other than 1, this is in spatial_unit/s;
                          # this threshold is used to determine whether a body part is moving or not;
                          # if the velocity is above this threshold, the body part is considered to be moving;
@@ -53,7 +53,7 @@ ylim = None # DON'T CHANGE THIS LINE
 #
 # uncomment if you want to set a fixed y-axis limit for the velocity plot:
 #
-# ylim = 1000 # set to a value, e.g., 1000, for fixed scaling;
+ylim = 1000 # set to a value, e.g., 1000, for fixed scaling;
 #
 # note: this is useful if you want to compare the velocity plots of different files;
 # if you set ylim to None, the y-axis limit will be automatically scaled to the data;
@@ -64,7 +64,7 @@ bodypart_not_to_plot = None  # DO NOT CHANGE THIS LINE
 #
 # uncomment if you want to exclude some body parts from the velocity plot:
 #
-# bodypart_not_to_plot = ['ear_L', 'ear_R'] # set to a list of body parts to be excluded from the velocity plot;
+bodypart_not_to_plot = ['center', 'tail', "ear_L", "ear_R"] # set to a list of body parts to be excluded from the velocity plot;
 
 
 # define bodypart-groups:
