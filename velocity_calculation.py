@@ -20,8 +20,8 @@ plt.rcParams["axes.spines.bottom"] = False
 plt.rcParams["axes.spines.left"]   = False
 plt.rcParams["axes.spines.right"]  = False
 # %% DEFINE PATHS
-DATA_PATH = "/Users/husker/Workspace/Denise/DLC project/Data/"
-RESULTS_PATH = "/Users/husker/Workspace/Denise/DLC project/Analysis/"
+DATA_PATH = "/Users/husker/Workspace/Denise/DLC project Test/Data/"
+RESULTS_PATH = "/Users/husker/Workspace/Denise/DLC project Test/Analysis/"
 RESULTS_EXCEL_PATH = RESULTS_PATH + "excel/"
 # check if the path exists:
 if not os.path.exists(RESULTS_PATH):
@@ -37,7 +37,7 @@ time_step = 1 / frame_rate
 likelihood_threshold = 0.9
 
 # define a threshold for movement detection:
-movement_threshold = 100  # px/frame
+movement_threshold = 50  # px/frame
 # %% FUNCTIONS
 
 # %% MAIN
@@ -159,11 +159,11 @@ for curr_filename in csv_files:
     ax[1].set_xlim(0, len(velocity_df))
     # change y-axis to log scale:
     #ax[1].set_yscale('log')
-    ax[1].set_title(f"body parts movement velocity $v=\sqrt{{v_x^2 + v_y^2}}$, with $v_{{x/y}}=\\frac{{\Delta x/y}}{{\Delta t}}$")
+    ax[1].set_title(f"body parts movement velocity $v=\\sqrt{{v_x^2 + v_y^2}}$, with $v_{{x/y}}=\\frac{{\\Delta x/y}}{{\\Delta t}}$")
     ax[2].set_yticks(np.arange(0, 2 * len(body_parts)+1, 2) + 1)
     ax[2].set_yticklabels(body_parts.append(pd.Index(['any'])))
     ax[2].set_title("body parts in motion")
-    ax[2].set_xlabel(f"frame ($\Delta$t = {time_step:.3f} s)")
+    ax[2].set_xlabel(f"frame ($\\Delta$t = {time_step:.3f} s)")
     
     # annotate in ax[2] the calculated number of frames with movement for each body part:
     for body_part_i, body_part in enumerate(body_parts):
