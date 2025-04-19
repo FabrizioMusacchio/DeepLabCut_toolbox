@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use our DeepLabCut Analysis Toolbox in your research, please cite it as below."
+title: "DeepLabCut Analysis Toolbox"
+version: 1.0.0
+date-released: 2025-04-19
+authors:
+  - family-names: Musacchio
+    given-names: Fabrizio
+    orcid: https://orcid.org/0000-0002-9043-3349
+repository-code: https://github.com/FabrizioMusacchio/MotilA/tree/main
+license: GPL-3.0
+keywords:
+  - DeepLabCut
+  - Neuroscience
+  - Behavioral Analysis
+  - Python
