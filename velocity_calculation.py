@@ -42,22 +42,39 @@ likelihood_threshold = 0.9 # this likelihood refers to the DLC assigned likeliho
                            # threshold, you can filter out low-confidence points.
 
 # define a threshold for movement detection:
-movement_threshold = 50  # px/frame; note, if you set pixel_size to 1, this is in px/s;
+movement_threshold = 100  # px/frame; note, if you set pixel_size to 1, this is in px/s;
                          # if you set pixel_size to a value other than 1, this is in spatial_unit/s;
                          # this threshold is used to determine whether a body part is moving or not;
                          # if the velocity is above this threshold, the body part is considered to be moving;
                          # if the velocity is below this threshold, the body part is considered to be not moving;
 
 # define bodypart-groups:
-# uncomment if you want to group body parts together:
+# initialize bodypart_groups as None if not defined:
+bodypart_groups = None # DON'T CHANGE THIS LINE
+# 
+# uncomment the following if you want to group body parts together:
 #
-# bodypart_groups = {
-#     'group1': ['bodypart1', 'bodypart2'],
-#     'group2': ['bodypart3']}
+bodypart_groups = {
+    'group1': ['bodypart1', 'bodypart2'],
+    'group2': ['bodypart3']}
 #
 # grouping body parts together can be useful if you want to assess 
 # moving/non moving only for a subset of body parts, e.g., for all 
 # head related body parts (nose, neck, etc.) in, e.g., freezing behavior analysis
+
+# define time intervals:
+# initialize bodypart_groups as None if not defined:
+time_intervals = None # DON'T CHANGE THIS LINE
+# 
+# uncomment if you want to separate the analysis into time intervals:
+#
+time_intervals = {
+    'interval1': [0, 2499],  # in frames
+    'interval2': [2500, 12499], # in frames
+    'interval3': [12500, 17000]} # in frames
+#
+# note: if you define time intervals, the analysis will be additionally performed for each 
+# interval separately; the results will be saved in separate CSV files for each interval;
 # %% FUNCTIONS
 
 # %% MAIN (LEAVE AS IT IS)
@@ -76,6 +93,9 @@ if not os.path.exists(RESULTS_EXCEL_PATH):
 # scan for all csv files in the data folder that do not start with a dot:
 csv_files = [f for f in os.listdir(DATA_PATH) if f.endswith('.csv') and not f.startswith('.')]
 print(f"Found {len(csv_files)} CSV files in the data folder.")
+
+# prepare DataFrame in which we collect the averages per files:
+all_velocity_df = pd.DataFrame()
 
 # loop over all CSV files:
 for curr_filename in csv_files:
@@ -170,7 +190,7 @@ for curr_filename in csv_files:
 
     # in ax[2], indicate with a gray overlay the total consecutive frames where body parts are moving, i.e., all 
     # consecutive frames where at least one body part is moving:
-    all_moving_frames = velocity_df.iloc[:, 1::4].sum(axis=1)/velocity_df.iloc[:, 1::4].sum(axis=1) # velocity_df.iloc[:, 1::4].any(axis=1)
+    all_moving_frames = velocity_df.iloc[:,2:].iloc[:, 1::4].sum(axis=1)/velocity_df.iloc[:,2:].iloc[:, 1::4].sum(axis=1) # velocity_df.iloc[:, 1::4].any(axis=1)
     # set NaN to 0:
     if all_moving_frames.isnull().any():
         all_moving_frames = all_moving_frames.fillna(0)
@@ -216,6 +236,22 @@ for curr_filename in csv_files:
     ax[2].xaxis.set_major_locator(FixedLocator(xticks))
     xticklabels = [f"{int(tick)}\n{tick * time_step:.1f}" for tick in xticks]
     ax[2].set_xticklabels(xticklabels)
+    # add a vertical line for each time interval (if defined):
+    if time_intervals is not None:
+        for interval_name, interval in time_intervals.items():
+            ax[0].axvline(x=interval[0], color='gray', linestyle='--', lw=1)
+            ax[0].axvline(x=interval[1], color='gray', linestyle='--', lw=1)
+            # get the lower limit of ax[0] y-axis:
+            lowest_position = ax[0].get_ylim()[0]
+            ax[0].text((interval[0] + interval[1]) / 2, lowest_position, 
+                       interval_name, va='bottom', ha='center',
+                       fontsize=14, color='gray')
+            ax[1].axvline(x=interval[0], color='gray', linestyle='--', lw=1)
+            ax[1].axvline(x=interval[1], color='gray', linestyle='--', lw=1)
+            ax[2].axvline(x=interval[0], color='gray', linestyle='--', lw=1)
+            ax[2].axvline(x=interval[1], color='gray', linestyle='--', lw=1)
+            # add a label for the interval:
+            
         
     # annotate in ax[2] the calculated number of frames with movement for each body part:
     for body_part_i, body_part in enumerate(body_parts):
@@ -237,11 +273,36 @@ for curr_filename in csv_files:
     plt.savefig(os.path.join(RESULTS_PATH, curr_filename+" velocity_plot.pdf"), dpi=300, transparent=True)
     plt.close(fig)
 
+
+    # Prepare output DataFrames:
     # add a column containing "any body part moving" to the velocity_df:
-    velocity_df['any_bodypart_moving'] = velocity_df.iloc[:, 2::4].sum(axis=1) > 0
+    velocity_df['any_bodypart_moving'] = velocity_df.iloc[:, 3::4].sum(axis=1) > 0
     
-    # if bodypart_groups is defined, calculate the movement for each group:
-    if bodypart_groups:
+    # collect the average velocity and percentage of moving frames for each body part,
+    # add it to a tmp dataframe and concatenate it to the all_velocity_df:
+    curr_line_df = pd.DataFrame()
+    curr_line_df['filename'] = [curr_filename_clean]
+    for bp in body_parts:
+        if pixel_size == 1:
+            unit_snippet = "px"
+        else:
+            unit_snippet = spatial_unit
+        # calculate the mean velocity and percentage of moving frames for each body part:
+        curr_line_df[bp + ' mean velocity ' + f' ({unit_snippet}/s)'] = [velocity_df[bp + '_velocity'].mean()]
+        curr_line_df[bp + ' moving frames'] = [velocity_df[bp + '_moving'].sum()]
+        curr_line_df[bp + ' moving frames %'] = [100 * velocity_df[bp + '_moving'].sum() / len(velocity_df)]
+        
+    # add the number of any_bodypart_moving=True frames and percentage:
+    any_bodypart_moving_True = velocity_df['any_bodypart_moving'].sum()
+    curr_line_df['any_bodypart_moving frames'] = [velocity_df['any_bodypart_moving'].sum()]
+    curr_line_df['any_bodypart_moving frames %'] = [100 * velocity_df['any_bodypart_moving'].sum() / len(velocity_df)]
+    # add the number of any_bodypart_moving=True frames and percentage:
+    curr_line_df['any_bodypart_moving frames'] = [velocity_df['any_bodypart_moving'].sum()]
+    curr_line_df['any_bodypart_moving frames %'] = [100 * velocity_df['any_bodypart_moving'].sum() / len(velocity_df)]
+        
+    
+    # if bodypart groups are defined, calculate the mean velocity for each group:
+    if bodypart_groups is not None:
         for group_name, group_bodyparts in bodypart_groups.items():
             # check if all body parts in the group are present in the DataFrame:
             if all([bp in body_parts for bp in group_bodyparts]):
@@ -251,16 +312,80 @@ for curr_filename in csv_files:
                 velocity_df[group_name + '_mean_velocity'] = group_velocity
                 # check whether the group is moving:
                 velocity_df[group_name + '_moving'] = group_velocity > movement_threshold
+                
+                # calculate the mean velocity and percentage of moving frames for each group:
+                curr_line_df[group_name + ' mean velocity ' + f' ({unit_snippet}/s)'] = [group_velocity.mean()]
+                curr_line_df[group_name + ' moving frames'] = [velocity_df[group_name + '_moving'].sum()]
+                curr_line_df[group_name + ' moving frames %'] = [100 * velocity_df[group_name + '_moving'].sum() / len(velocity_df)]
             else:
                 print(f"   WARNING: Group '{group_name}' contains body parts not found in the DataFrame.")
                 print(f"   Missing body parts: {[bp for bp in group_bodyparts if bp not in body_parts]}")
                 print(f"   Skipping group '{group_name}'.")
                 continue
+    else:
+        print("   No bodypart groups defined. Skipping group analysis.")
+            
+    # if time_intervals is defined: 
+    if time_intervals is not None:
+        # first just add another column indicating the time interval:
+        velocity_df['time_interval'] = pd.Series(dtype='object')
+        for interval_name, interval in time_intervals.items():
+            # check if the interval is valid:
+            if len(interval) == 2 and interval[0] < interval[1]:
+                # assign the interval name to the corresponding frames:
+                velocity_df.loc[interval[0]:interval[1], 'time_interval'] = interval_name
+            else:
+                print(f"   WARNING: Invalid time interval '{interval_name}': {interval}. Skipping.")
+                continue
+        # where velocity_df['time_interval'] has empty values, assign 'not defined':
+        velocity_df['time_interval'] = velocity_df['time_interval'].fillna('not defined')
+        
+        # second, for curr_line_df, calculate the mean velocity and percentage of moving frames for each time interval
+        # and bodypart:
+        for interval_name, interval in time_intervals.items():
+            # check if the interval is valid:
+            if len(interval) == 2 and interval[0] < interval[1]:
+                # filter the DataFrame for the current interval:
+                curr_interval_df = velocity_df.loc[interval[0]:interval[1], :].copy()
+                # calculate the mean velocity and percentage of moving frames for each body part:
+                for bp in body_parts:
+                    curr_line_df[interval_name + ' ' + bp + ' mean velocity ' + f' ({unit_snippet}/s)'] = [curr_interval_df[bp + '_velocity'].mean()]
+                    curr_line_df[interval_name + ' ' + bp + ' moving frames'] = [curr_interval_df[bp + '_moving'].sum()]
+                    curr_line_df[interval_name + ' ' + bp + ' moving frames %'] = [100 * curr_interval_df[bp + '_moving'].sum() / len(curr_interval_df)]
+                # add the number of any_bodypart_moving=True frames and percentage:
+                any_bodypart_moving_True = curr_interval_df['any_bodypart_moving'].sum()
+                curr_line_df[interval_name + ' ' + 'any_bodypart_moving frames'] = [curr_interval_df['any_bodypart_moving'].sum()]
+                curr_line_df[interval_name + ' ' + 'any_bodypart_moving frames %'] = [100 * curr_interval_df['any_bodypart_moving'].sum() / len(curr_interval_df)]
+                
+                # if bodypart groups are defined, calculate the mean velocity for each group:
+                if bodypart_groups is not None:
+                    for group_name, group_bodyparts in bodypart_groups.items():
+                        # check if all body parts in the group are present in the DataFrame:
+                        if all([bp in body_parts for bp in group_bodyparts]):
+                            # calculate the velocity for the group as the average of the individual body parts within the group:
+                            group_velocity = curr_interval_df[[bp + '_velocity' for bp in group_bodyparts]].mean(axis=1)
+                            # add the group velocity to the DataFrame:
+                            curr_line_df[interval_name + ' ' + group_name + '_mean_velocity'] = group_velocity
+                            # if curr_line_df[interval_name + ' ' + group_name + '_mean_velocity'] is NaN (=no movement), set it to 0:
+                            curr_line_df[interval_name + ' ' + group_name + '_mean_velocity'] = curr_line_df[interval_name + ' ' + group_name + '_mean_velocity'].fillna(0)
+                            # check whether the group is moving:
+                            curr_line_df[interval_name + ' ' + group_name + '_moving'] = group_velocity > movement_threshold
+                            
+                            # calculate the mean velocity and percentage of moving frames for each group:
+                            curr_line_df[interval_name + ' ' + group_name + ' mean velocity ' + f' ({unit_snippet}/s)'] = [group_velocity.mean()]
+                            curr_line_df[interval_name + ' ' + group_name + ' moving frames'] = [curr_interval_df[group_name + '_moving'].sum()]
+                            curr_line_df[interval_name + ' ' + group_name + ' moving frames %'] = [100 * curr_interval_df[group_name + '_moving'].sum() / len(curr_interval_df)]
+    
+    # update the all_velocity_df with the current line:
+    all_velocity_df = pd.concat([all_velocity_df, curr_line_df], ignore_index=True)
 
     # save or display the results:
     velocity_df.to_csv(RESULTS_EXCEL_PATH + curr_filename_clean + ' velocity_results.csv', index=False)
     print(f"   Saved results to {RESULTS_EXCEL_PATH + curr_filename_clean + ' velocity_results.csv'}")
 
+# save the all_velocity_df to a CSV file:
+all_velocity_df.to_csv(RESULTS_EXCEL_PATH + "all_velocity_results.csv", index=False)
+print(f"Saved all results to {RESULTS_EXCEL_PATH + 'all_velocity_results.csv'}")
     
 # %% END
 print("Done!")
