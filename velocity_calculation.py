@@ -23,8 +23,8 @@ plt.rcParams["axes.spines.right"]  = False
 # %% DEFINE PATH AND PARAMETERS (ADJUST HERE)
 
 # set your data and results paths here:
-DATA_PATH = "/Users/husker/Workspace/Denise/DLC project Test/Data/"
-RESULTS_PATH = "/Users/husker/Workspace/Denise/DLC project Test/Analysis/"
+DATA_PATH = "./input_data/"
+RESULTS_PATH = "./results/"
 
 # define frame rate and time step:
 frame_rate = 30  # fps
