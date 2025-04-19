@@ -20,25 +20,44 @@ plt.rcParams["axes.spines.top"]    = False
 plt.rcParams["axes.spines.bottom"] = False
 plt.rcParams["axes.spines.left"]   = False
 plt.rcParams["axes.spines.right"]  = False
-# %% DEFINE PATHS
+# %% DEFINE PATH AND PARAMETERS (ADJUST HERE)
+
+# set your data and results paths here:
 DATA_PATH = "/Users/husker/Workspace/Denise/DLC project Test/Data/"
 RESULTS_PATH = "/Users/husker/Workspace/Denise/DLC project Test/Analysis/"
-RESULTS_EXCEL_PATH = RESULTS_PATH + "excel/"
-# check if the path exists:
-if not os.path.exists(RESULTS_PATH):
-    os.makedirs(RESULTS_PATH)
-if not os.path.exists(RESULTS_EXCEL_PATH):
-    os.makedirs(RESULTS_EXCEL_PATH)
-# %% DEFINE PARAMETERS
+
 # define frame rate and time step:
 frame_rate = 30  # fps
 time_step = 1 / frame_rate
 
+# define the size of a pixel (if available):
+pixel_size = 1  # spatial_unit/px; leave as 1 if you don't know the size of a pixel
+spatial_unit="cm"
+
 # define likelihood threshold for valid points:
-likelihood_threshold = 0.9
+likelihood_threshold = 0.9 # this likelihood refers to the DLC assigned likelihood
+                           # for each bodypart; it is a value between 0 and 1, where
+                           # 1 means "very likely" and 0 means "not likely at all";
+                           # "likely" roughly means "reliable"; by adjusting this 
+                           # threshold, you can filter out low-confidence points.
 
 # define a threshold for movement detection:
-movement_threshold = 50  # px/frame
+movement_threshold = 50  # px/frame; note, if you set pixel_size to 1, this is in px/s;
+                         # if you set pixel_size to a value other than 1, this is in spatial_unit/s;
+                         # this threshold is used to determine whether a body part is moving or not;
+                         # if the velocity is above this threshold, the body part is considered to be moving;
+                         # if the velocity is below this threshold, the body part is considered to be not moving;
+
+# define bodypart-groups:
+# uncomment if you want to group body parts together:
+#
+# bodypart_groups = {
+#     'group1': ['bodypart1', 'bodypart2'],
+#     'group2': ['bodypart3']}
+#
+# grouping body parts together can be useful if you want to assess 
+# moving/non moving only for a subset of body parts, e.g., for all 
+# head related body parts (nose, neck, etc.) in, e.g., freezing behavior analysis
 # %% FUNCTIONS
 
 # %% MAIN (LEAVE AS IT IS)
@@ -47,6 +66,12 @@ HERE, YOU DON'T NEED TO CHANGE ANYTHING – EXCEPT YOU WANT
 TO CUSTOMIZE THE ANALYSIS ACCORDING TO YOUR NEEDS.
 """
 
+# create the results folder if it does not exist:
+RESULTS_EXCEL_PATH = RESULTS_PATH + "excel/"
+if not os.path.exists(RESULTS_PATH):
+    os.makedirs(RESULTS_PATH)
+if not os.path.exists(RESULTS_EXCEL_PATH):
+    os.makedirs(RESULTS_EXCEL_PATH)
 
 # scan for all csv files in the data folder that do not start with a dot:
 csv_files = [f for f in os.listdir(DATA_PATH) if f.endswith('.csv') and not f.startswith('.')]
@@ -73,7 +98,6 @@ for curr_filename in csv_files:
 
     # convert data to numeric:
     df_cleaned = df_cleaned.iloc[1:].reset_index(drop=True).apply(pd.to_numeric, errors='coerce')
-
 
 
     # identify unique body parts:
@@ -114,6 +138,10 @@ for curr_filename in csv_files:
 
         # compute overall velocity magnitude:
         velocity = np.sqrt(vx**2 + vy**2)
+        
+        # if pixel_size is not 1, convert velocity to spatial_unit/s:
+        if pixel_size != 1:
+            velocity = velocity * pixel_size
 
         # store results (aligning size with original DataFrame by padding with NaN at the start)
         velocity_df[body_part + '_velocity'] = np.insert(velocity, 0, np.nan)
@@ -144,7 +172,8 @@ for curr_filename in csv_files:
     # consecutive frames where at least one body part is moving:
     all_moving_frames = velocity_df.iloc[:, 1::4].sum(axis=1)/velocity_df.iloc[:, 1::4].sum(axis=1) # velocity_df.iloc[:, 1::4].any(axis=1)
     # set NaN to 0:
-    all_moving_frames = all_moving_frames.fillna(0)
+    if all_moving_frames.isnull().any():
+        all_moving_frames = all_moving_frames.fillna(0)
     all_moving_frames_diff = np.diff(all_moving_frames.astype(int))
     all_moving_frames_start = np.where(all_moving_frames_diff == 1)[0] + 1
     all_moving_frames_end = np.where(all_moving_frames_diff == -1)[0] + 1
@@ -164,8 +193,15 @@ for curr_filename in csv_files:
     ax[0].set_ylabel("position (px)")
     ax[0].set_title("mouse body parts positions")
     ax[0].legend(loc='upper right')
-    ax[1].set_ylabel("velocity (px/s)")
-    ax[1].axhline(movement_threshold, color='r', linestyle='--', label=f'movement threshold\n({movement_threshold} px/s)')
+    if pixel_size == 1:
+        ax[1].set_ylabel("velocity (px/s)")
+    else:
+        ax[1].set_ylabel(f"velocity ({spatial_unit}/s)")
+    if pixel_size == 1:
+        unit_snippet = "px"
+    else:
+        unit_snippet = spatial_unit
+    ax[1].axhline(movement_threshold, color='r', linestyle='--', label=f'movement threshold\n({movement_threshold} {unit_snippet}/s)')
     ax[1].legend(loc='upper right')
     ax[1].set_xlim(0, len(velocity_df))
     # change y-axis to log scale:
@@ -203,6 +239,23 @@ for curr_filename in csv_files:
 
     # add a column containing "any body part moving" to the velocity_df:
     velocity_df['any_bodypart_moving'] = velocity_df.iloc[:, 2::4].sum(axis=1) > 0
+    
+    # if bodypart_groups is defined, calculate the movement for each group:
+    if bodypart_groups:
+        for group_name, group_bodyparts in bodypart_groups.items():
+            # check if all body parts in the group are present in the DataFrame:
+            if all([bp in body_parts for bp in group_bodyparts]):
+                # calculate the velocity for the group as the average of the individual body parts within the group:
+                group_velocity = velocity_df[[bp + '_velocity' for bp in group_bodyparts]].mean(axis=1)
+                # add the group velocity to the DataFrame:
+                velocity_df[group_name + '_mean_velocity'] = group_velocity
+                # check whether the group is moving:
+                velocity_df[group_name + '_moving'] = group_velocity > movement_threshold
+            else:
+                print(f"   WARNING: Group '{group_name}' contains body parts not found in the DataFrame.")
+                print(f"   Missing body parts: {[bp for bp in group_bodyparts if bp not in body_parts]}")
+                print(f"   Skipping group '{group_name}'.")
+                continue
 
     # save or display the results:
     velocity_df.to_csv(RESULTS_EXCEL_PATH + curr_filename_clean + ' velocity_results.csv', index=False)
