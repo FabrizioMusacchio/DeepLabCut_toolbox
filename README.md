@@ -142,13 +142,13 @@ with $\theta_{\text{move}} = \texttt{movement\\_threshold}$ (e.g., 0.5 cm/s). Th
 - maximum speed
 
 #### **Freezing (explained in more detail below)**  
-We compute a smoothed speed $\tilde v_t$ using a centered median over `freeze_smooth_win` frames (default ≈ 0.25 s). A frame is *freezing* if $\tilde v_t < \theta_{\text{freeze}}$, with $\theta_{\text{freeze}} = \text{freeze_speed_threshold}` (default equals `movement_threshold`). Short False gaps up to `freeze_gap_merge_max_s` are merged, and bouts shorter than `freeze_min_duration_s` are discarded.
+We compute a smoothed speed $\tilde v_t$ using a centered median over `freeze_smooth_win` frames (default ≈ 0.25 s). A frame is *freezing* if $\tilde v_t < \theta_{\text{freeze}}$, with $\theta_{\text{freeze}} = \texttt{freeze\\_speed\\_threshold}` (default equals `movement_threshold`). Short False gaps up to `freeze_gap_merge_max_s` are merged, and bouts shorter than `freeze_min_duration_s` are discarded.
 
 
 #### **Occupancy heatmap**  
 We create a 2D histogram of $(x, y)$ in the rectified square with `bins = 60` and Gaussian smoothing (`sigma = 2.5`). The bin width is $ \text{arena\_size} / \text{bins} $. We overlay the center boundary defined by `border_margin`:
 
-- center: $x,y \in [\text{border\_margin}, \text{arena\_size} - \text{border\_margin}]$
+- center: $x,y \in [\text{border\\_margin}, \text{arena\\_size} - \text{border\\_margin}]$
 - border: complement of the center
 
 We report time in center, time in border, and center–border crossing count.
