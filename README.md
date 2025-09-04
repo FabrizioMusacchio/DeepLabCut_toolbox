@@ -130,11 +130,12 @@ Freezing detection uses the **smoothed** speed $\tilde v_t$ (centered median ove
 
 
 #### **Movement vs. non-movement**  
-A frame is labeled *moving* iff
+A frame is labeled *moving* if
 
 $$v_t \ge \theta_{\text{move}}$$
 
 with $\theta_{\text{move}} = \text{movement\_threshold}$ (e.g., 0.5 cm/s). The pipeline reports:
+
 - total moving time = number of moving frames divided by $f$
 - total distance moved = $\sum v_t \,\Delta t$ over moving frames
 - average moving speed and overall average speed
