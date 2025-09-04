@@ -134,7 +134,7 @@ A frame is labeled *moving* if
 
 $$v_t \ge \theta_{\text{move}}$$
 
-with $\theta_{\text{move}} = \text{movement\\_threshold}$ (e.g., 0.5 cm/s). The pipeline reports:
+with $\theta_{\text{move}} = \texttt{movement\\_threshold}$ (e.g., 0.5 cm/s). The pipeline reports:
 
 - total moving time = number of moving frames divided by $f$
 - total distance moved = $\sum v_t \,\Delta t$ over moving frames
@@ -142,7 +142,7 @@ with $\theta_{\text{move}} = \text{movement\\_threshold}$ (e.g., 0.5 cm/s). The 
 - maximum speed
 
 #### **Freezing (explained in more detail below)**  
-We compute a smoothed speed $\tilde v_t$ using a centered median over `freeze_smooth_win` frames (default ≈ 0.25 s). A frame is *freezing* if $\tilde v_t < \theta_{\text{freeze}}$, with $\theta_{\text{freeze}} = \texttt{freeze\\_speed\\_threshold}` (default equals `movement_threshold`). Short False gaps up to `freeze_gap_merge_max_s` are merged, and bouts shorter than `freeze_min_duration_s` are discarded.
+We compute a smoothed speed $\tilde v_t$ using a centered median over `freeze_smooth_win` frames (default ≈ 0.25 s). A frame is *freezing* if $\tilde v_t < \theta_{\text{freeze}}$, with $\theta_{\text{freeze}} = \texttt{freeze\\_speed\\_threshold}$ (default:  `movement_threshold`). Short False gaps up to `freeze_gap_merge_max_s` are merged, and bouts shorter than `freeze_min_duration_s` are discarded.
 
 
 #### **Occupancy heatmap**  
