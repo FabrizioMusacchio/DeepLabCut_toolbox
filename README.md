@@ -17,7 +17,7 @@ mamba install -y ipykernel ipython numpy matplotlib pandas opencv scipy
 ```
 
 ## 📥 Square arena analysis (open field, contextual fear conditioning/freezing, w/ and w/o simultaneous imaging)
-This toolbox analyzes behavior in **square arenas** (e.g., open field, contextual fear conditioning/freezing). It supports experiments **with or without** simultaneous imaging/stimulation, detected via a tracked LED.
+The script `OF.py` analyzes behavior in **square arenas** (e.g., open field (OF), contextual fear conditioning/freezing (cFC)). It supports experiments **with or without** simultaneous imaging/stimulation, detected via a tracked LED.
 
 ### Expected DLC input & naming conventions
 We expect DLC CSVs with a **two-level header**: `(bodypart, attribute)` where `attribute ∈ {x, y, likelihood}`.
@@ -178,7 +178,7 @@ Let $x(t), y(t)$ denote the position of the chosen bodypart at frame $t$, sample
    $$v(t) \;=\; \frac{\sqrt{(x(t) - x(t-1))^2 + (y(t) - y(t-1))^2}}{\Delta t}$$
    where $\Delta t = 1/f$ is the time step.
 2. **Smoothing** (optional):  
-   $$\tilde{v}(t) = \text{median\_filter}(v(t), w)$$
+   $$\tilde{v}(t) = \text{median\\_filter}(v(t), w)$$
    with a smoothing window $w$ (e.g. 250 ms).
 3. **Thresholding**:  
    A frame is marked as *freezing* if
