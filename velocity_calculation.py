@@ -21,7 +21,6 @@ plt.rcParams["axes.spines.bottom"] = False
 plt.rcParams["axes.spines.left"]   = False
 plt.rcParams["axes.spines.right"]  = False
 # %% DEFINE PATH AND PARAMETERS (ADJUST HERE)
-
 # set your data and results paths here:
 DATA_PATH = "/Users/husker/Workspace/Emine/DLC cFC/Data Test/"
 RESULTS_PATH = "/Users/husker/Workspace/Emine/DLC cFC/results/"
@@ -42,7 +41,7 @@ likelihood_threshold = 0.9 # this likelihood refers to the DLC assigned likeliho
                            # threshold, you can filter out low-confidence points.
 
 # define a threshold for movement detection:
-movement_threshold = 200  # px/frame; note, if you set pixel_size to 1, this is in px/s;
+movement_threshold = 15  # px/frame; note, if you set pixel_size to 1, this is in px/s;
                          # if you set pixel_size to a value other than 1, this is in spatial_unit/s;
                          # this threshold is used to determine whether a body part is moving or not;
                          # if the velocity is above this threshold, the body part is considered to be moving;
@@ -53,7 +52,7 @@ ylim = None # DON'T CHANGE THIS LINE
 #
 # uncomment if you want to set a fixed y-axis limit for the velocity plot:
 #
-ylim = 1000 # set to a value, e.g., 1000, for fixed scaling;
+ylim = 200 # set to a value, e.g., 1000, for fixed scaling;
 #
 # note: this is useful if you want to compare the velocity plots of different files;
 # if you set ylim to None, the y-axis limit will be automatically scaled to the data;
@@ -64,7 +63,7 @@ bodypart_not_to_plot = None  # DO NOT CHANGE THIS LINE
 #
 # uncomment if you want to exclude some body parts from the velocity plot:
 #
-bodypart_not_to_plot = ['center', 'tail', "ear_L", "ear_R"] # set to a list of body parts to be excluded from the velocity plot;
+bodypart_not_to_plot = ['center', 'tail', "ear_L", "ear_R", "neck"] # set to a list of body parts to be excluded from the velocity plot;
 
 
 # define bodypart-groups:
@@ -73,9 +72,9 @@ bodypart_groups = None # DON'T CHANGE THIS LINE
 # 
 # uncomment if you want to group body parts together:
 #
-# bodypart_groups = {
-#     'head': ['nose', 'ear_L', 'ear_R', 'neck'],
-#     'body': ['center']}
+bodypart_groups = {
+    'head': ['nose', 'ear_L', 'ear_R', 'neck'],
+    'body': ['center']}
 #
 # grouping body parts together can be useful if you want to assess 
 # moving/non moving only for a subset of body parts, e.g., for all 
@@ -199,7 +198,7 @@ for curr_filename in csv_files:
         ax[0].plot(frames_array,y, label=body_part+' y', c=colors[body_part_i], alpha=0.5)
         if bodypart_not_to_plot is not None:
             if body_part not in bodypart_not_to_plot:
-                ax[1].plot(velocity, label=body_part, c=colors[body_part_i])
+                ax[1].plot(velocity, label=body_part, c=colors[body_part_i], lw=0.5)
         
         # indicate with a shaded area the frames where the body part is moving; to do so, filter for consecutive True values:
         moving_frames = velocity_df[body_part + '_moving']
