@@ -61,10 +61,10 @@ plt.rcParams["axes.spines.right"]  = False
 # set your data and results paths here:
 #DATA_PATH = "/Users/husker/Workspace/Pinky Camp/OF/"
 #RESULTS_PATH = "/Users/husker/Workspace/Pinky Camp/OF/DLC_analysis/"
-#DATA_PATH = "/Users/husker/Workspace/Henrike DLC/OF 2025/"
-#RESULTS_PATH = "/Users/husker/Workspace/Henrike DLC/OF 2025/DLC_analysis/"
-DATA_PATH = "/Users/husker/Workspace/Denise DLC/cFC 2025/"
-RESULTS_PATH = "/Users/husker/Workspace/Denise DLC/cFC 2025/DLC_analysis/"
+DATA_PATH = "/Users/husker/Workspace/Henrike DLC/OF 2025/"
+RESULTS_PATH = "/Users/husker/Workspace/Henrike DLC/OF 2025/DLC_analysis/"
+# DATA_PATH = "/Users/husker/Workspace/Denise DLC/cFC 2025/"
+# RESULTS_PATH = "/Users/husker/Workspace/Denise DLC/cFC 2025/DLC_analysis/"
 
 # define frame rate and time step:
 frame_rate = 30  # fps
@@ -72,13 +72,13 @@ time_step = 1 / frame_rate
 
 # arena size (assumed to be square):
 arena_size = 49  # cm; adjust this to the size of your arena in cm
-arena_size = 25 # our cFC box
+# arena_size = 25 # our cFC box
 
 # define the size of a pixel (if available):
 spatial_unit="cm"
 
 # define whether to cut tracking data after mouse_first_track_delay seconds:
-cut_tracking = 306 # False: no cut; otherwise, define number of seconds to define total tracking duration
+cut_tracking = 360 # False: no cut; otherwise, define number of seconds to define total tracking duration
                    # (rest will be cut)
 mouse_first_track_delay = 2 # define the delay after which tracking starts (in seconds)
                             # i.e., after 'mouse_first_track_delay' seconds the mouse was first
@@ -92,8 +92,11 @@ likelihood_threshold = 0.9 # this likelihood refers to the DLC assigned likeliho
                            # threshold, you can filter out low-confidence points.
 
 # define a switch whether to only use data where the LED light is on:
-use_LED_light = True  # if True, only use data where the LED light is on
+use_LED_light = False  # if True, only use data where the LED light is on
                      # if False, use all data regardless of the LED light status
+
+# define whether to plot the tracked body part trajectory as a scatter plot (True) or as a line (False):
+heat_plot_scatter = True
 
 # define a threshold for movement detection:
 movement_threshold = 0.5  # px/frame; note, if you set pixel_size to 1, this is in px/s
@@ -109,7 +112,7 @@ use_filtered_data = True # True if you want to use DLC's filtered output (if ava
                          # False for the unfiltered one
 
 # for a default OF experiment, define the distance of the border-/center-region border:
-border_margin = 5.0  # in spatial_unit (e.g., 10 for OF/50x50 cm box or 5 for cFC/25x25 cm box)
+border_margin = 10.0  # in spatial_unit (e.g., 10 for OF/50x50 cm box or 5 for cFC/25x25 cm box)
 
 # freezing detection parameters: 
 freeze_speed_threshold = movement_threshold  # set to movement_threshold or any other values
@@ -120,13 +123,13 @@ freeze_gap_merge_max_s = 0.25 # the maximum duration of a gap to be merged (in s
 # define bodypart-groups:
 mouse_center_point_DLC_bp = {
     'center point': 'centerpoint'} # adjust 'center' to the name of the DLC body part that represents the center point of the mouse
-mouse_center_point_DLC_bp = {
+""" mouse_center_point_DLC_bp = {
     'center point': 'center', # never change the KEY of this line, just its VALUE
     'tailbase': 'tailbase',   # all subsequent KEYS can be determined by yourself
     'ear_L': 'ear_L',
     'ear_R': 'ear_R',
     'headholder': 'headholder',
-}
+} """
 
 arena_corners_DLC_bp = {
     'top left corner':      'A',
@@ -138,7 +141,7 @@ LED_lights_DLC_bp = {
     'LED light': 'LED_2P'} # adjust 'led' to the name of the DLC body part that represents the LED light;
 
 # define the bodypart you'd like to analyze (must be a KEY in mouse_center_point_DLC_bp)
-focus_bodypart = "headholder"   # z.B. "center point", "tailbase", "ear_L", ...
+focus_bodypart = "center point"   # z.B. "center point", "tailbase", "ear_L", ...
 # %% FUNCTIONS
 def plot_arena_corners_and_mouse(df_cleaned, arena_corners_DLC_bp, mouse_center_point_DLC_bp, 
                                  curr_filename_clean, curr_results_path):
@@ -429,7 +432,7 @@ print(f"loaded {len(loaded_runs)} file(s) for processing.")
 measurements_df = pd.DataFrame()
 
 for run in loaded_runs:
-    ## %%
+    # %%
     # run = loaded_runs[3]
     curr_filename       = run["filename"]
     curr_filename_clean = run["filename_clean"]
@@ -464,8 +467,7 @@ for run in loaded_runs:
 
     # ---------- raw (before transform) ----------
     arena_corners_raw = plot_arena_corners_and_mouse(
-        df_cleaned, arena_corners_DLC_bp, mouse_center_point_DLC_bp, curr_filename_clean, curr_results_path
-    )
+        df_cleaned, arena_corners_DLC_bp, mouse_center_point_DLC_bp, curr_filename_clean, curr_results_path)
 
     # ---------- perspective transform into square arena ----------
     corner_coords      = list(arena_corners_raw.values())
@@ -566,7 +568,11 @@ for run in loaded_runs:
     plt.imshow(smoothed_hist.T, origin='lower', extent=[0, arena_size, 0, arena_size], cmap='viridis', aspect='auto')
     cbar = plt.colorbar(label=f'smoothed occupancy count\n(bin size = {arena_size/bins:.2f} {spatial_unit})', fraction=0.046, pad=0.005)
     cbar.ax.tick_params(labelsize=12)
-    plt.scatter(x_data, y_data, s=10, label=bp_name+" points", alpha=0.5, color='pink')
+    if heat_plot_scatter:
+        plt.scatter(x_data, y_data, s=10, label=bp_name+" points", alpha=0.3, color='pink', lw=0)
+    else: 
+        # plot trajectory as a consecutive line:
+        plt.plot(x_data, y_data, label=bp_name+" trajectory", color='pink', lw=1.0)
     # center-border boundary box:
     rect = plt.Rectangle(
         (border_margin, border_margin),
@@ -588,7 +594,7 @@ for run in loaded_runs:
     plt.title(f"mouse heatmap in and {bp_name} points\n{curr_filename_clean}" + (" (LED light ON only)" if use_LED_light else ""))
     plt.xlabel(f"x ({spatial_unit})", fontsize=14)
     plt.ylabel(f"y ({spatial_unit})", fontsize=14)
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.legend(bbox_to_anchor=(1.10, 1), loc='upper left')
     plt.grid(True, which='both', linestyle='--', linewidth=0.5)
     plt.gca().set_aspect('equal', adjustable='box')
     plt.xlim(0, arena_size)
@@ -693,17 +699,28 @@ for run in loaded_runs:
     max_speed            = speed_vec.max()
     total_movie_length   = len(df_raw) / frame_rate
 
-    plt.annotate(
-        f'total time in arena during LED: {total_time_in_arena:.2f} s (total recording time: {total_movie_length:.2f} s)\n'
-        f'total moving time during LED: {total_moving_time:.2f} s (= {total_moving_time / total_time_in_arena * 100:.1f}%)\n'
-        f'avg. speed during moving: {avg_speed_moving:.2f} {spatial_unit}/s ({avg_speed_moving/100* 3.6:.2f} km/h)\n'
-        f'avg. speed overall: {avg_speed_overall:.2f} {spatial_unit}/s (= {avg_speed_overall/100* 3.6:.2f} km/h)\n'
-        f'max. speed: {max_speed:.2f} {spatial_unit}/s (= {max_speed/100 * 3.6:.2f} km/h)\n'
-        f'total distance moved: {total_distance_moved:.2f} {spatial_unit}',
-        xy=(0.25, 0.98), xycoords='axes fraction', fontsize=14,
-        bbox=dict(boxstyle='round', facecolor='white', alpha=0.0),
-        verticalalignment='top', horizontalalignment='left'
-    )
+    if use_LED_light:
+        plt.annotate(
+            f'total time in arena during LED: {total_time_in_arena:.2f} s (total recording time: {total_movie_length:.2f} s)\n'
+            f'total moving time during LED: {total_moving_time:.2f} s (= {total_moving_time / total_time_in_arena * 100:.1f}%)\n'
+            f'avg. speed during moving: {avg_speed_moving:.2f} {spatial_unit}/s ({avg_speed_moving/100* 3.6:.2f} km/h)\n'
+            f'avg. speed overall: {avg_speed_overall:.2f} {spatial_unit}/s (= {avg_speed_overall/100* 3.6:.2f} km/h)\n'
+            f'max. speed: {max_speed:.2f} {spatial_unit}/s (= {max_speed/100 * 3.6:.2f} km/h)\n'
+            f'total distance moved: {total_distance_moved:.2f} {spatial_unit}',
+            xy=(0.25, 0.98), xycoords='axes fraction', fontsize=14,
+            bbox=dict(boxstyle='round', facecolor='white', alpha=0.0),
+            verticalalignment='top', horizontalalignment='left')
+    else:
+        plt.annotate(
+            f'total time in arena: {total_time_in_arena:.2f} s (total recording time: {total_movie_length:.2f} s)\n'
+            f'total moving time: {total_moving_time:.2f} s (= {total_moving_time / total_time_in_arena * 100:.1f}%)\n'
+            f'avg. speed during moving: {avg_speed_moving:.2f} {spatial_unit}/s ({avg_speed_moving/100* 3.6:.2f} km/h)\n'
+            f'avg. speed overall: {avg_speed_overall:.2f} {spatial_unit}/s (= {avg_speed_overall/100* 3.6:.2f} km/h)\n'
+            f'max. speed: {max_speed:.2f} {spatial_unit}/s (= {max_speed/100 * 3.6:.2f} km/h)\n'
+            f'total distance moved: {total_distance_moved:.2f} {spatial_unit}',
+            xy=(0.25, 0.98), xycoords='axes fraction', fontsize=14,
+            bbox=dict(boxstyle='round', facecolor='white', alpha=0.0),
+            verticalalignment='top', horizontalalignment='left')
 
     plt.title(f"mouse speed in {curr_filename_clean} ({title_suffix})")
     plt.xlabel('time (s)')
@@ -939,6 +956,37 @@ for run in loaded_runs:
                     nonmoving_time_cut  = (valid.sum() - speed_cut_df.loc[valid, 'was_mouse_moving'].sum()) / frame_rate
                     total_in_arena_cut  = valid.sum() / frame_rate
 
+                    # further cut-speed metrics:
+                    has_valid  = bool(valid.any())
+                    has_moving = bool((valid & speed_cut_df['was_mouse_moving']).any()) if has_valid else False
+
+                    avg_speed_moving_cut = float(
+                        speed_cut_df.loc[valid & speed_cut_df['was_mouse_moving'], 'speed'].mean()
+                    ) if has_moving else np.nan
+
+                    avg_speed_overall_cut = float(
+                        speed_cut_df.loc[valid, 'speed'].mean()
+                    ) if has_valid else np.nan
+
+                    max_speed_cut = float(
+                        speed_cut_df.loc[valid, 'speed'].max()
+                    ) if has_valid else np.nan
+
+                    total_distance_moved_cut = float(
+                        speed_cut_df.loc[valid & speed_cut_df['was_mouse_moving'], 'speed'].sum() * time_step
+                    ) if has_valid else 0.0
+
+                    # ins measurements-Dict schreiben
+                    measurements.update({
+                        'avg_speed_moving (cut)': avg_speed_moving_cut,
+                        'avg_speed_overall (cut)': avg_speed_overall_cut,
+                        'max_speed (cut)': max_speed_cut,
+                        'total_distance_moved_in_spatial_unit (cut)': total_distance_moved_cut,
+                        'num_frames_moving (cut)': int(speed_cut_df.loc[valid, 'was_mouse_moving'].sum()),
+                        'num_frames_total (cut)': int(valid.sum()),
+                    })
+                    
+
                     print(
                         f"  cut_tracking: start at t={t_start:.3f}s (idx {start_idx_found}), "
                         f"window={mouse_first_track_delay:.2f}s, cut={cut_tracking:.2f}s, "
@@ -1123,23 +1171,24 @@ for run in loaded_runs:
             else:
                 bins = 60
                 hist_cut, xedges, yedges = np.histogram2d(
-                    x_data_cut, y_data_cut, bins=bins, range=[[0, arena_size], [0, arena_size]]
-                )
+                    x_data_cut, y_data_cut, bins=bins, range=[[0, arena_size], [0, arena_size]])
                 smoothed_hist_cut = gaussian_filter(hist_cut, sigma=2.5)
                 plt.imshow(smoothed_hist_cut.T, origin='lower',
                            extent=[0, arena_size, 0, arena_size], cmap='viridis', aspect='auto')
                 cbar = plt.colorbar(label=f'smoothed occupancy count\n(bin size = {arena_size/bins:.2f} {spatial_unit})',
                                     fraction=0.046, pad=0.005)
                 cbar.ax.tick_params(labelsize=12)
-                plt.scatter(x_data_cut, y_data_cut, s=10, label=bp_name + ' points (cut)', alpha=0.5, color='pink')
+                if heat_plot_scatter:
+                    plt.scatter(x_data_cut, y_data_cut, s=10, label=bp_name + ' points (cut)', alpha=0.5, color='pink')
+                else:
+                    plt.plot(x_data_cut, y_data_cut, lw=0.5, alpha=0.7, label=bp_name + ' points (cut)', color='pink')
                 # center-border boundary box:
                 rect = plt.Rectangle(
                     (border_margin, border_margin),
                     arena_size - 2 * border_margin,
                     arena_size - 2 * border_margin,
                     linewidth=2, edgecolor='red', facecolor='none', linestyle='--', alpha=0.8,
-                    label=f'center-border boundary\n(border margin: {border_margin} cm)'
-                )
+                    label=f'center-border boundary\n(border margin: {border_margin} cm)')
                 plt.gca().add_patch(rect)
                 # arena boundary box:
                 rect_arena = plt.Rectangle(
@@ -1147,13 +1196,12 @@ for run in loaded_runs:
                     arena_size,
                     arena_size,
                     linewidth=2, edgecolor='blue', facecolor='none', linestyle='--', alpha=0.8,
-                    label=f'arena boundary\n(size: {arena_size} cm)'
-                )
+                    label=f'arena boundary\n(size: {arena_size} cm)')
                 plt.gca().add_patch(rect_arena)
                 plt.title(f"mouse heatmap and {bp_name} points (cut) in\n{curr_filename_clean} [cut {t_start_cut:.2f}-{t_end_cut:.2f}s]")
                 plt.xlabel(f"x ({spatial_unit})", fontsize=14)
                 plt.ylabel(f"y ({spatial_unit})", fontsize=14)
-                plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+                plt.legend(bbox_to_anchor=(1.10, 1), loc='upper left')
                 plt.grid(True, which='both', linestyle='--', linewidth=0.5)
                 plt.gca().set_aspect('equal', adjustable='box')
                 plt.xlim(0, arena_size)
