@@ -23,7 +23,9 @@ plt.rcParams["axes.spines.right"]  = False
 # %% DEFINE PATH AND PARAMETERS (ADJUST HERE)
 # set your data and results paths here:
 DATA_PATH = "/Users/husker/Workspace/Emine/DLC cFC/Data Test/"
+DATA_PATH = "/Users/husker/Workspace/Denise DLC/additional movies/filtered/"
 RESULTS_PATH = "/Users/husker/Workspace/Emine/DLC cFC/results/"
+RESULTS_PATH = "/Users/husker/Workspace/Denise DLC/additional movies/filtered/results/"
 
 # define frame rate and time step:
 frame_rate = 30  # fps
@@ -199,6 +201,8 @@ for curr_filename in csv_files:
         if bodypart_not_to_plot is not None:
             if body_part not in bodypart_not_to_plot:
                 ax[1].plot(velocity, label=body_part, c=colors[body_part_i], lw=0.5)
+        else:
+            ax[1].plot(velocity, label=body_part, c=colors[body_part_i], lw=0.5)
         
         # indicate with a shaded area the frames where the body part is moving; to do so, filter for consecutive True values:
         moving_frames = velocity_df[body_part + '_moving']
@@ -208,7 +212,7 @@ for curr_filename in csv_files:
         for start, end in zip(moving_frames_start, moving_frames_end):
             ax[2].fill_between(np.arange(start, end), 
                             body_part_i * 2, (body_part_i + 1) * 2, 
-                            color=colors[body_part_i], alpha=0.75, lw=0)
+                            color=colors[body_part_i], alpha=0.75, lw=0)        
 
     # in ax[2], indicate with a gray overlay the total consecutive frames where body parts are moving, i.e., all 
     # consecutive frames where at least one body part is moving:
