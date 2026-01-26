@@ -6,6 +6,7 @@ It also detects, based on a threshold, whether a body part is moving or not.
 
 author: Fabrizio Musacchio
 date:   Feb 20, 2025
+        Jan 26, 2026 - added option to use either filtered or not-filtered data
 """
 # %% IMPORTS
 import os
@@ -23,9 +24,10 @@ plt.rcParams["axes.spines.right"]  = False
 # %% DEFINE PATH AND PARAMETERS (ADJUST HERE)
 # set your data and results paths here:
 DATA_PATH = "/Users/husker/Workspace/Emine/DLC cFC/Data Test/"
-DATA_PATH = "/Users/husker/Workspace/Denise DLC/additional movies/filtered/"
 RESULTS_PATH = "/Users/husker/Workspace/Emine/DLC cFC/results/"
-RESULTS_PATH = "/Users/husker/Workspace/Denise DLC/additional movies/filtered/results/"
+
+# use filtered data?
+use_filtered_data = True  # if True, use filtered data; if False, use raw data
 
 # define frame rate and time step:
 frame_rate = 30  # fps
@@ -54,7 +56,7 @@ ylim = None # DON'T CHANGE THIS LINE
 #
 # uncomment if you want to set a fixed y-axis limit for the velocity plot:
 #
-ylim = 200 # set to a value, e.g., 1000, for fixed scaling;
+#ylim = 200 # set to a value, e.g., 1000, for fixed scaling;
 #
 # note: this is useful if you want to compare the velocity plots of different files;
 # if you set ylim to None, the y-axis limit will be automatically scaled to the data;
@@ -65,7 +67,7 @@ bodypart_not_to_plot = None  # DO NOT CHANGE THIS LINE
 #
 # uncomment if you want to exclude some body parts from the velocity plot:
 #
-bodypart_not_to_plot = ['center', 'tail', "ear_L", "ear_R", "neck"] # set to a list of body parts to be excluded from the velocity plot;
+#bodypart_not_to_plot = ['center', 'tail', "ear_L", "ear_R", "neck"] # set to a list of body parts to be excluded from the velocity plot;
 
 
 # define bodypart-groups:
@@ -74,9 +76,9 @@ bodypart_groups = None # DON'T CHANGE THIS LINE
 # 
 # uncomment if you want to group body parts together:
 #
-bodypart_groups = {
-    'head': ['nose', 'ear_L', 'ear_R', 'neck'],
-    'body': ['center']}
+# bodypart_groups = {
+#     'head': ['nose', 'ear_L', 'ear_R', 'neck'],
+#     'body': ['center']}
 #
 # grouping body parts together can be useful if you want to assess 
 # moving/non moving only for a subset of body parts, e.g., for all 
@@ -88,11 +90,11 @@ time_intervals = None # DON'T CHANGE THIS LINE
 # 
 # uncomment if you want to separate the analysis into time intervals:
 #
-time_intervals = {
-    'pre-shock': [0, 7200],  # in frames
-    'after_shock1': [7200, 11050], # in frames
-    'after_shock2': [11051, 14700],
-    'after_shock3': [14701, 17500]} # in frames
+# time_intervals = {
+#     'pre-shock': [0, 7200],  # in frames
+#     'after_shock1': [7200, 11050], # in frames
+#     'after_shock2': [11051, 14700],
+#     'after_shock3': [14701, 17500]} # in frames
 #
 # note: if you define time intervals, the analysis will be additionally performed for each 
 # interval separately; the results will be saved in separate CSV files for each interval;
@@ -113,7 +115,18 @@ if not os.path.exists(RESULTS_EXCEL_PATH):
 
 # scan for all csv files in the data folder that do not start with a dot:
 csv_files = [f for f in os.listdir(DATA_PATH) if f.endswith('.csv') and not f.startswith('.')]
-print(f"Found {len(csv_files)} CSV files in the data folder.")
+
+"""
+now check whether to use filtered or raw data; If true, only take those csv files that 
+contain 'filtered' in their filename; if false, only take those csv files that do not 
+contain 'filtered' in their filename;
+"""
+if use_filtered_data:
+    csv_files = [f for f in csv_files if 'filtered' in f]
+else:
+    csv_files = [f for f in csv_files if 'filtered' not in f]
+
+print(f"Found {len(csv_files)} CSV files in the data folder. 'use_filtered_data' is set to {use_filtered_data}.")
 
 # prepare DataFrame in which we collect the averages per files:
 all_velocity_df = pd.DataFrame()
