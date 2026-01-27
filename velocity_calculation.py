@@ -33,6 +33,12 @@ use_filtered_data = True  # if True, use filtered data; if False, use raw data
 frame_rate = 30  # fps
 time_step = 1 / frame_rate
 
+read_frame_rate_from_DLC_pickled_file = False  # if True, read the frame rate from the DLC pickle file; if False, use the defined frame_rate above
+""" 
+NOTE: read_frame_rate_from_DLC_pickled_file is not implemented yet! We will
+add Luk's' code to read the frame rate from the DLC pickle file in a future update.
+"""
+
 # define the size of a pixel (if available):
 pixel_size = 1  # spatial_unit/px; leave as 1 if you don't know the size of a pixel
 spatial_unit="cm"
@@ -137,10 +143,16 @@ for curr_filename in csv_files:
     ## %%
     # load the DeepLabCut output CSV file:
     curr_file = DATA_PATH + curr_filename
+    print(f"Processing {curr_filename}...")
+    
+    # read the CSV file with multi-index columns:
     df = pd.read_csv(curr_file, header=[1, 2])
     
-    print(f"Processing {curr_filename}...")
-
+    """ if read_frame_rate_from_DLC_pickled_file:
+        # TODO: reade pickle file to get frame rate
+        # frame_rate = ...
+        # time_step = 1 / frame_rate """
+    
     # clean the filename:
     curr_filename_clean = curr_filename.replace('.csv', '').replace(' ', '_')
 
