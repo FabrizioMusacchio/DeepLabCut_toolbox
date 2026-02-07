@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dlc-behavior-toolbox"
+version = "0.1.0"
+description = "Post-processing and behavioral metrics for pose estimates extracted with DeepLabCut."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "pandas",
+  "matplotlib",
+  "pingouin",
+  "seaborn",
+  "openpyxl",
+  "opencv",
+  "scipy",
+  "scikit-bio",
+  "scikit-learn",
+  "umap",
+  "ipykernel",
+  "ipython"
+]
+
+[tool.setuptools]
+packages = ["dlc_behavior_toolbox"]
