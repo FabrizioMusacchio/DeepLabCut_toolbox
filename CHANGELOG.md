@@ -1,10 +1,15 @@
 # Changes in DLC Toolbox scripts
 
+
+## 🔧 Release v1.0.4 - Just a test release
+This is just a test release to check the release process after removing zenodo.json file.
+
+--- 
+
 ## 🔧 Release v1.0.3 - Preparations for open-source-friendly restructuring
 The release prepares the codebase for a more modular and open-source-friendly structure. 
 
 Introduced a `publications` folder to house scripts specific to analyses performed for publications, allowing for better organization and separation from the main toolbox code.
-
 
 --- 
 
