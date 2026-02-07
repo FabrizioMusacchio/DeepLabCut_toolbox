@@ -17,7 +17,7 @@ mamba install -y ipykernel ipython numpy matplotlib pandas pingouin seaborn open
 ```
 
 ## 📥 Square arena analysis (open field, contextual fear conditioning/freezing, w/ and w/o simultaneous imaging)
-The script `OF.py` analyzes behavior in **square arenas** (e.g., open field (OF), contextual fear conditioning/freezing (cFC)). It supports experiments **with or without** simultaneous imaging/stimulation, detected via a tracked LED.
+The script `analyze_arena_pose.py` analyzes behavior in **square arenas** (e.g., open field (OF), contextual fear conditioning/freezing (cFC)). It supports experiments **with or without** simultaneous imaging/stimulation, detected via a tracked LED.
 
 ### Expected DLC input & naming conventions
 We expect DLC CSVs with a **two-level header**: `(bodypart, attribute)` where `attribute ∈ {x, y, likelihood}`.
