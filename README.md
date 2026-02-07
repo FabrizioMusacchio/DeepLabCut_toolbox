@@ -13,7 +13,7 @@ New scripts will be added from time to time, and the repository will be updated 
 ```bash
 conda create -n dlc_analysis -y python=3.12 mamba
 conda activate dlc_analysis
-mamba install -y ipykernel ipython numpy matplotlib pandas opencv scipy
+mamba install -y ipykernel ipython numpy matplotlib pandas pingouin seaborn openpyxl opencv scipy scikit-bio scikit-learn umap
 ```
 
 ## 📥 Square arena analysis (open field, contextual fear conditioning/freezing, w/ and w/o simultaneous imaging)
