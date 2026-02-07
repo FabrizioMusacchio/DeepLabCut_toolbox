@@ -50,6 +50,7 @@ from matplotlib.ticker import FixedLocator
 from matplotlib.patches import Ellipse
 from itertools import cycle
 import matplotlib as mpl
+from matplotlib.path import Path
 from scipy.ndimage import gaussian_filter
 
 import cv2
@@ -65,14 +66,14 @@ plt.rcParams["axes.spines.right"]  = False
 #DATA_PATH = "/Users/husker/Workspace/Pinky Camp/OF/"
 #RESULTS_PATH = "/Users/husker/Workspace/Pinky Camp/OF/DLC_analysis/"
 DATA_PATH = "/Users/husker/Workspace/Henrike DLC/NOR/Trial 2/"
-#DATA_PATH = "/Users/husker/Workspace/Henrike DLC/cFC/recall/"
+DATA_PATH = "/Users/husker/Workspace/Henrike DLC/cFC/recall/"
 #DATA_PATH = "/Users/husker/Workspace/Plastic Project/Revisions 2025/Data/OF DLC/"
 # DATA_PATH = "/Users/husker/Workspace/Plastic Project/Revisions 2025/Data/NOR DLC/Hab/"
 # DATA_PATH = "/Users/husker/Workspace/Plastic Project/Revisions 2025/Data/NOR DLC/Trial 2/"
 # DATA_PATH = "/Users/husker/Workspace/Plastic Project/Revisions 2025/Data/SOR DLC/Hab/"
 #DATA_PATH = "/Users/husker/Workspace/Plastic Project/Revisions 2025/Data/SOR DLC/Trial 1/"
 # DATA_PATH = "/Users/husker/Workspace/Plastic Project/Revisions 2025/Data/EMP DLC/"
-DATA_PATH = "/Users/husker/Workspace/Plastic Project/Revisions 2025/Data/cFC DLC/conditioning/"
+#DATA_PATH = "/Users/husker/Workspace/Plastic Project/Revisions 2025/Data/cFC DLC/recall/"
 RESULTS_PATH = os.path.join(os.path.dirname(DATA_PATH), "DLC_analysis")
 os.makedirs(RESULTS_PATH, exist_ok=True)
 # DATA_PATH = "/Users/husker/Workspace/Denise DLC/cFC 2025/"
@@ -106,7 +107,7 @@ likelihood_threshold = 0.9 # this likelihood refers to the DLC assigned likeliho
                            # 1 means "very likely" and 0 means "not likely at all"
                            # "likely" roughly means "reliable"; by adjusting this 
                            # threshold, you can filter out low-confidence points.
-likelihood_threshold = 0.9 # cFC plastic
+likelihood_threshold = 0.3
 # define a switch whether to only use data where the LED light is on:
 use_LED_light = False  # if True, only use data where the LED light is on
                      # if False, use all data regardless of the LED light status
@@ -120,7 +121,6 @@ movement_threshold = 0.5  # px/frame; note, if you set pixel_size to 1, this is 
                          # this threshold is used to determine whether a body part is moving or not
                          # if the velocity is above this threshold, the body part is considered to be moving
                          # if the velocity is below this threshold, the body part is considered to be not moving
-movement_threshold = 1.0 # cFC plastic
 
 ylim = 60 # set to a value, e.g., 1000, for fixed scaling
 ylim_smoothed = 30 # set to a value, e.g., 1000, for fixed scaling in smoothed velocity plots
@@ -152,11 +152,11 @@ mouse_center_point_DLC_bp = {  # Plastik
     'center point': 'centerpoint',
     'nose': 'nose',
     'headcenter': 'headcenter',
-    'tailbase': 'tailbase',  
-    'ear_L': 'ear_L',
-    'ear_R': 'ear_R'
+    # 'tailbase': 'tailbase',  
+    # 'ear_L': 'ear_L',
+    # 'ear_R': 'ear_R'
     }
-""" mouse_center_point_DLC_bp = {  # Henrike OF
+mouse_center_point_DLC_bp = {  # Henrike OF
     'center point': 'centerpoint',
     'nose': 'nose',
     'tailbase': 'tail',
@@ -174,7 +174,7 @@ mouse_center_point_DLC_bp = {  # Henrike cFC
     'tailbase': 'tail base',
     'nose': 'nose',
     'headcenter': 'head center',
-    } """
+    }
 
 """ Multi-animal tracking:
 in case of a multi-animal DLC tracking, provide the name of the actual subject. At the
@@ -599,7 +599,7 @@ def extract_bouts(mask: np.ndarray,
                 val[s:e] = True
         mask = val
 
-    # 2) fill bouts from (possibly filled) mask signal
+    # 2) Bouts aus dem (ggf. gefüllten) Maskensignal holen
     diff = np.diff(mask.astype(int))
     starts = np.where(diff == 1)[0] + 1
     ends   = np.where(diff == -1)[0] + 1
@@ -737,7 +737,9 @@ def transform_objects_raw(objects_raw: list[dict], M: np.ndarray) -> list[dict]:
         })
     return out
 
-def _polygon_contains_points(poly_xy: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+def _polygon_contains_points_DELET_LATER(poly_xy: np.ndarray, 
+                             x: np.ndarray, 
+                             y: np.ndarray) -> np.ndarray:
     """
     Point-in-polygon test using OpenCV.
     poly_xy: (N,2) float array
@@ -754,6 +756,19 @@ def _polygon_contains_points(poly_xy: np.ndarray, x: np.ndarray, y: np.ndarray) 
         py = float(p[0, 1])
         out[i] = cv2.pointPolygonTest(poly, (px, py), False) >= 0
     return out
+
+def _polygon_contains_points(poly_xy: np.ndarray, 
+                             x: np.ndarray, 
+                             y: np.ndarray) -> np.ndarray:
+    """ 
+    Point-in-polygon test using matplotlib.path.Path.
+    poly_xy: (N,2) float array
+    x,y: arrays of same length
+    Returns boolean array.
+    """
+    poly_xy = np.asarray(poly_xy, dtype=float)
+    pts = np.column_stack([x, y]).astype(float)
+    return Path(poly_xy).contains_points(pts)
 
 def _ellipse_params_from_markers(markers: dict) -> tuple[float, float, float, float]:
     top    = markers["top point"]
@@ -886,109 +901,6 @@ def _count_entries(mask: np.ndarray) -> int:
         return 0
     m = mask.astype(int)
     return int(np.sum((m[1:] == 1) & (m[:-1] == 0)))
-
-def build_objects_geometry(df_transformed: pd.DataFrame,
-                           objects_DLC_bp_list: list[dict],
-                           M: np.ndarray | None = None,
-                           object_zone_margin: float = 0.0,
-                           arena_size: float | None = None) -> list[dict]:
-    """
-    Build object geometries (inner + zone) in transformed coordinates.
-
-    Only accepts shapes:
-      * 'polygon'  (expects 4 corner markers: tl,tr,bl,br)
-      * 'ellipse'  (expects 4 extremal markers: top,right,bottom,left)
-
-    Notes:
-      * If df_transformed already contains transformed coordinates, pass M=None.
-      * object_zone_margin expands polygons approximately (scale about centroid)
-        and expands ellipses by increasing semi-axes a,b.
-    """
-    objects_geom: list[dict] = []
-
-    for obj in objects_DLC_bp_list:
-        shape = obj.get("shape", "").lower().strip()
-        name = obj.get("name", "object")
-
-        if shape not in {"polygon", "ellipse"}:
-            raise ValueError(f"Object '{name}': shape must be 'polygon' or 'ellipse', got '{shape}'")
-
-        if shape == "polygon":
-            k_tl = obj["top left corner"]
-            k_tr = obj["top right corner"]
-            k_bl = obj["bottom left corner"]
-            k_br = obj["bottom right corner"]
-
-            if M is None:
-                tl = _pt_mean_xy(df_transformed, k_tl)
-                tr = _pt_mean_xy(df_transformed, k_tr)
-                bl = _pt_mean_xy(df_transformed, k_bl)
-                br = _pt_mean_xy(df_transformed, k_br)
-            else:
-                tl = _transform_point(M, _pt_mean_xy(df_transformed, k_tl))
-                tr = _transform_point(M, _pt_mean_xy(df_transformed, k_tr))
-                bl = _transform_point(M, _pt_mean_xy(df_transformed, k_bl))
-                br = _transform_point(M, _pt_mean_xy(df_transformed, k_br))
-
-            pts = np.array([tl, tr, br, bl], dtype=float)
-            inner_poly = _order_points_ccw(pts)
-            zone_poly  = _scale_polygon_about_centroid(inner_poly, float(object_zone_margin))
-
-            if arena_size is not None:
-                inner_poly = inner_poly.copy()
-                zone_poly = zone_poly.copy()
-                inner_poly[:, 0] = np.clip(inner_poly[:, 0], 0.0, arena_size)
-                inner_poly[:, 1] = np.clip(inner_poly[:, 1], 0.0, arena_size)
-                zone_poly[:, 0] = np.clip(zone_poly[:, 0], 0.0, arena_size)
-                zone_poly[:, 1] = np.clip(zone_poly[:, 1], 0.0, arena_size)
-
-            objects_geom.append({
-                "name": name,
-                "shape": "polygon",
-                "markers": {"tl": tl, "tr": tr, "bl": bl, "br": br},
-                "inner": {"xy": inner_poly},
-                "zone":  {"xy": zone_poly},
-            })
-
-        elif shape == "ellipse":
-            k_top    = obj["top point"]
-            k_right  = obj["right point"]
-            k_bottom = obj["bottom point"]
-            k_left   = obj["left point"]
-
-            if M is None:
-                top    = _pt_mean_xy(df_transformed, k_top)
-                right  = _pt_mean_xy(df_transformed, k_right)
-                bottom = _pt_mean_xy(df_transformed, k_bottom)
-                left   = _pt_mean_xy(df_transformed, k_left)
-            else:
-                top    = _transform_point(M, _pt_mean_xy(df_transformed, k_top))
-                right  = _transform_point(M, _pt_mean_xy(df_transformed, k_right))
-                bottom = _transform_point(M, _pt_mean_xy(df_transformed, k_bottom))
-                left   = _transform_point(M, _pt_mean_xy(df_transformed, k_left))
-
-            markers = {"top point": top, "right point": right, "bottom point": bottom, "left point": left}
-            cx, cy, a, b = _ellipse_params_from_markers(markers)
-
-            az = float(a) + float(object_zone_margin)
-            bz = float(b) + float(object_zone_margin)
-
-            if arena_size is not None:
-                cx = float(np.clip(cx, 0.0, arena_size))
-                cy = float(np.clip(cy, 0.0, arena_size))
-                az = max(0.0, float(az))
-                bz = max(0.0, float(bz))
-
-            objects_geom.append({
-                "name": name,
-                "shape": "ellipse",
-                "markers": {"top": top, "right": right, "bottom": bottom, "left": left},
-                "inner": {"cx": float(cx), "cy": float(cy), "a": float(a), "b": float(b)},
-                "zone":  {"cx": float(cx), "cy": float(cy), "a": float(az), "b": float(bz)},
-                "axis_components": {"a": float(a), "b": float(b)},
-            })
-
-    return objects_geom
 
 def compute_object_zone_metrics(df_points: pd.DataFrame,
                                 bp_name: str,
@@ -1145,7 +1057,7 @@ def _collect_object_bodyparts(objects_DLC_bp_list: list[dict]) -> set[str]:
             bps.add(v)
     return bps
 
-# this function can be REMOVED later: 
+# this function can be REMOVE later: 
 def overlay_objectsOLD(ax,
                     objects_geom: list[dict],
                     show_labels: bool = True,
@@ -1431,45 +1343,6 @@ def epm_virtual_corners_shifted_long_lines(arena_corners_raw, y_down=True):
     )
 
 # sanity plot to verify EPM virtual corners:
-def plot_epm_virtual_corners_OLD(arena_corners_raw, src_points, curr_filename_clean, 
-                                curr_results_path, spatial_unit="cm"):
-    plt.figure(figsize=(8, 6))
-    for (p,q,label) in [(A,B,"AB"), (C,D,"CD"), (E,F,"EF"), (G,H,"GH")]:
-        plt.plot([p[0], q[0]], [p[1], q[1]], "-", label=label)
-    
-    # plot the lines through A-F, B-E, C-H, D-G:
-    plt.plot([A[0], F[0]], [A[1], F[1]], ":", color="tab:blue", alpha=1.0, label="A-F")
-    plt.plot([B[0], E[0]], [B[1], E[1]], ":", color="tab:orange", alpha=1.0, label="B-E")
-    plt.plot([C[0], H[0]], [C[1], H[1]], ":", color="tab:green", alpha=1.0, label="C-H")
-    plt.plot([D[0], G[0]], [D[1], G[1]], ":", color="tab:red", alpha=1.0, label="D-G")
-        
-    # also plot lines through the virtual corners:
-    plt.plot([src_points[0][0], src_points[1][0]], [src_points[0][1], src_points[1][1]], "--", color="gray", alpha=0.5)
-    plt.plot([src_points[2][0], src_points[3][0]], [src_points[2][1], src_points[3][1]], "--", color="gray", alpha=0.5)
-    plt.plot([src_points[0][0], src_points[2][0]], [src_points[0][1], src_points[2][1]], "--", color="gray", alpha=0.5)
-    plt.plot([src_points[1][0], src_points[3][0]], [src_points[1][1], src_points[3][1]], "--", color="gray", alpha=0.5)
-
-    for (pt,label) in [(src_points[0],"TL"), (src_points[1],"TR"), (src_points[2],"BL"), (src_points[3],"BR")]:
-        plt.plot(pt[0], pt[1], "o")
-        plt.text(pt[0], pt[1], label)
-        
-    for corner_name, (corner_x, corner_y) in arena_corners_raw.items():
-        plt.scatter(corner_x, corner_y, marker="x", s=100, label=corner_name)
-        # add text label:
-        name_use = corner_name.split('_')[-1]  # only last part
-        plt.text(corner_x, corner_y, name_use)
-
-    plt.gca().set_aspect("equal", adjustable="box")
-    plt.legend(bbox_to_anchor=(1.15, 1), loc='upper left')
-    plt.title(f"EPM virtual corners estimation\n{curr_filename_clean} (raw)")
-    plt.xlabel(f"x ({spatial_unit})")
-    plt.ylabel(f"y ({spatial_unit})")
-    plt.grid(True, linestyle="--", linewidth=0.5)
-    plt.tight_layout()
-    plt.savefig(os.path.join(curr_results_path, f"{curr_filename_clean}_EPM_virtual_corners.pdf"), dpi=300)
-    plt.savefig(os.path.join(curr_results_path, f"{curr_filename_clean}_EPM_virtual_corners.png"), dpi=300, 
-                transparent=True)
-    plt.close()
 def plot_epm_virtual_corners(arena_corners_raw, src_points, curr_filename_clean,
                             curr_results_path, spatial_unit="cm"):
 
@@ -1922,11 +1795,13 @@ for curr_filename in csv_files:
     df_cleaned = df_in.iloc[:, 1:].copy()
     #df_cleaned = df_in.iloc[:, len(header_rows)-1:].copy()
 
-    # set proper multi-index on columns
+    # set proper multi-index on columns:
     df_cleaned.columns = pd.MultiIndex.from_tuples(df_cleaned.columns)
 
-    # convert to numeric
-    df_cleaned = df_cleaned.iloc[1:].reset_index(drop=True).apply(pd.to_numeric, errors='coerce')
+    # convert to numeric:
+    #df_cleaned = df_cleaned.iloc[1:].reset_index(drop=True).apply(pd.to_numeric, errors='coerce')
+    df_cleaned = df_cleaned.reset_index(drop=True)
+    df_cleaned = df_cleaned.apply(pd.to_numeric, errors="coerce")
     
     """ 
     In case we had three header rows (scorer, individuals, bodyparts),
@@ -1954,7 +1829,7 @@ print(f"loaded {len(loaded_runs)} file(s) for processing.")
 # iterate over loaded datasets and run transforms, plots & metrics:
 measurements_df = pd.DataFrame()
 
-
+# einmalig, vor MAIN PROCESSING:
 if objects_DLC_bp_list:
     object_bodyparts = _collect_object_bodyparts(objects_DLC_bp_list)
 else:
@@ -2521,16 +2396,12 @@ for run in loaded_runs:
             
         # ---------- freeze analysis (uncut) ----------
         speed_s = speed_df['speed'].rolling(freeze_smooth_win, center=True, min_periods=1).median()
-        
-        # optional: protect against tiny negative values from numerical noise
-        speed_s = speed_s.clip(lower=0.0)
 
         valid_uncut = speed_df['was_mouse_in_arena'].astype(bool)
         if use_LED_light and ('was_LED_light_on' in speed_df.columns):
             valid_uncut &= speed_df['was_LED_light_on'].astype(bool)
 
-        # is_freeze = valid_uncut & (speed_s < freeze_speed_threshold)
-        is_freeze = valid_uncut & (speed_s <= float(freeze_speed_threshold))
+        is_freeze = valid_uncut & (speed_s < freeze_speed_threshold)
 
         # Bouts extrahieren (positionsbasiert)
         bouts_uncut, summary_uncut = extract_bouts(is_freeze.to_numpy(), frame_rate, freeze_min_duration_s, 
@@ -2544,7 +2415,7 @@ for run in loaded_runs:
         # Freeze-Flag
         speed_df['freezing_frame (uncut)'] = is_freeze.to_numpy()
 
-        # bout metadata columns:
+        # Bout-Metadaten-Spalten
         speed_df['freezing_bout_id (uncut)']          = pd.Series(pd.NA, index=speed_df.index, dtype='Int64')
         speed_df['freezing_bout_start_s (uncut)']     = np.nan
         speed_df['freezing_bout_end_s (uncut)']       = np.nan
@@ -2568,12 +2439,16 @@ for run in loaded_runs:
             speed_df.iloc[s_pos:e_pos, col_e]   = end_global
             speed_df.iloc[s_pos:e_pos, col_dur] = duration
 
-        # Safety: Frames w/o freezing get now no bout metadata
+        # Safety: Frames ohne freezing bekommen keine Bout-Metadaten
         off = ~speed_df['freezing_frame (uncut)']
-        speed_df.loc[off, ['freezing_bout_id (uncut)',
+        """ speed_df.loc[off, ['freezing_bout_id (uncut)',
                         'freezing_bout_start_s (uncut)',
                         'freezing_bout_end_s (uncut)',
-                        'freezing_bout_duration_s (uncut)']] = pd.NA
+                        'freezing_bout_duration_s (uncut)']] = pd.NA """
+        speed_df.loc[off, 'freezing_bout_id (uncut)'] = pd.NA
+        speed_df.loc[off, ['freezing_bout_start_s (uncut)',
+                        'freezing_bout_end_s (uncut)',
+                        'freezing_bout_duration_s (uncut)']] = np.nan
 
 
         # save bout list:
@@ -2631,11 +2506,11 @@ for run in loaded_runs:
             speed_cut_df = speed_df.copy()
 
             # --- tolerance parameters (adjust as needed) ---
-            max_false_frac   = 0.10     # max. amount of False in the window
-            max_false_streak = 3        # max. length of a False block (in frames)
+            max_false_frac   = 0.10     # max. Anteil an False im Fenster
+            max_false_streak = 3        # max. Länge eines False-Blocks (in Frames)
             win_frames       = max(1, int(round(mouse_first_track_delay * frame_rate))) if mouse_first_track_delay else 0
 
-            # Load base masks:
+            # Basis-Masken laden:
             if 'was_mouse_in_arena' not in speed_cut_df.columns or not speed_cut_df['was_mouse_in_arena'].notna().any():
                 print("  cut_tracking: 'was_mouse_in_arena' column missing or empty; no cut applied.")
             else:
@@ -2648,10 +2523,10 @@ for run in loaded_runs:
                         print("  cut_tracking: LED requested, but 'was_LED_light_on' missing -> falling back to in-arena only.")
                     was_valid_all = in_arena
 
-                # Provide the global mask for window_is_stable():
-                was_in = was_valid_all  # <-- window_is_stable() reads this variable
+                # Für window_is_stable() die globale Maske bereitstellen:
+                was_in = was_valid_all  # <-- window_is_stable() liest diese Variable
 
-                # Search for start window: first stable section after the first True
+                # Startfenster suchen: erster stabiler Abschnitt nach dem ersten True
                 true_idx = np.flatnonzero(was_valid_all)
                 if true_idx.size > 0 and win_frames > 0:
                     first_true_idx = int(true_idx[0])
@@ -2739,7 +2614,7 @@ for run in loaded_runs:
                         })
 
                         # -------------------------------------------------------------------------
-                        # object zone metrics (cut)
+                        # PATCH/NEW: object zone metrics (cut)
                         # -------------------------------------------------------------------------
                         # Preconditions:
                         #   * objects_geom has been created earlier from df_all_transformed
@@ -2791,46 +2666,42 @@ for run in loaded_runs:
                     freeze_smooth_win, center=True, min_periods=1
                 ).median()
 
-                # optional: protect against tiny negative values from numerical noise
-                speed_s_cut = speed_s_cut.clip(lower=0.0)
-
-                # 2) valid frames (arena & optional LED)
+                # 2) gültige Frames (Arena & optional LED)
                 valid_cut = speed_cut_df['was_mouse_in_arena'].astype(bool)
                 if use_LED_light and ('was_LED_light_on' in speed_cut_df.columns):
                     valid_cut &= speed_cut_df['was_LED_light_on'].astype(bool)
 
-                # 3) Freeze mask
-                #is_freeze_cut = valid_cut & (speed_s_cut < freeze_speed_threshold)
-                is_freeze_cut = valid_cut & (speed_s_cut <= float(freeze_speed_threshold))
+                # 3) Freeze-Maske
+                is_freeze_cut = valid_cut & (speed_s_cut < freeze_speed_threshold)
 
-                # 4) Extract bouts from the **positional** mask
+                # 4) Bouts aus der **positionellen** Maske extrahieren
                 bouts_cut, summary_cut = extract_bouts(is_freeze_cut.to_numpy(), frame_rate, freeze_min_duration_s,
                                                     freeze_gap_merge_max_s=freeze_gap_merge_max_s)
 
-                # 5) Update measurements
+                # 5) Measurements aktualisieren
                 measurements.update({f"{k} (cut)": v for k, v in summary_cut.items()})
 
-                # 6) Columns (frame flag + bout metadata)
+                # 6) Spalten (Frame-Flag + Bout-Metadaten)
                 speed_cut_df['freezing_frame (cut)'] = is_freeze_cut.to_numpy()
 
-                # NA-capable integer for IDs
+                # NA-fähiger Integer für IDs
                 speed_cut_df['freezing_bout_id (cut)']           = pd.Series(pd.NA, index=speed_cut_df.index, dtype='Int64')
                 speed_cut_df['freezing_bout_start_s (cut)']      = np.nan
                 speed_cut_df['freezing_bout_end_s (cut)']        = np.nan
                 speed_cut_df['freezing_bout_duration_s (cut)']   = np.nan
 
-                # Column positions for iloc assignment
+                # Spaltenpositionen für iloc-Zuweisung
                 col_id   = speed_cut_df.columns.get_loc('freezing_bout_id (cut)')
                 col_s    = speed_cut_df.columns.get_loc('freezing_bout_start_s (cut)')
                 col_e    = speed_cut_df.columns.get_loc('freezing_bout_end_s (cut)')
                 col_dur  = speed_cut_df.columns.get_loc('freezing_bout_duration_s (cut)')
 
-                # 7) Enter bout info **position-based**
+                # 7) Bout-Infos **positionsbasiert** eintragen
                 for bid, b in enumerate(bouts_cut, start=1):
                     s_pos = int(b['start_frame'])
                     e_pos = int(b['end_frame']) + 1   # iloc: Ende exklusiv
 
-                    # global times from the 'time' column
+                    # globale Zeiten aus der 'time'-Spalte holen
                     start_global = float(speed_cut_df.iloc[s_pos]['time'])
                     end_global   = float(speed_cut_df.iloc[e_pos-1]['time'])
                     duration     = end_global - start_global
@@ -2840,14 +2711,14 @@ for run in loaded_runs:
                     speed_cut_df.iloc[s_pos:e_pos, col_e]   = end_global
                     speed_cut_df.iloc[s_pos:e_pos, col_dur] = duration
 
-                # 8) Safety: outside of True frames, no bout metadata
+                # 8) Safety: außerhalb von True-Frames keine Bout-Metadaten
                 off = ~speed_cut_df['freezing_frame (cut)']
                 speed_cut_df.loc[off, ['freezing_bout_id (cut)',
                                     'freezing_bout_start_s (cut)',
                                     'freezing_bout_end_s (cut)',
                                     'freezing_bout_duration_s (cut)']] = pd.NA
 
-                # (optional) small consistency check for debug output
+                # (optional) kleine Konsistenzprüfung für Debug-Ausgabe
                 bad = speed_cut_df['freezing_bout_id (cut)'].notna() & (~speed_cut_df['freezing_frame (cut)'])
                 if bad.any():
                     print(f"  WARNING: {bad.sum()} rows carry bout metadata while freezing_frame=False (indexing mismatch).")
@@ -2884,11 +2755,11 @@ for run in loaded_runs:
                 )
                 in_border = ~in_center
 
-                # times: number of frames * 1/frame rate
+                # times: Anzahl der Frames * 1/framerate
                 time_in_center = in_center.sum() / frame_rate
                 time_in_border = in_border.sum() / frame_rate
 
-                # crossings: count transitions center <-> border
+                # crossings: Übergänge center <-> border zählen
                 crossings = np.sum(np.diff(in_center.astype(int)) != 0)
 
                 print(f"  cut metrics: center={time_in_center:.2f}s, border={time_in_border:.2f}s, crossings={crossings}")
